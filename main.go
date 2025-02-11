@@ -1,7 +1,12 @@
 package main
 
-import "fmt"
+//Importing broadcast and time
+import (
+	"TTK4145---project/Broadcast"
+)
 
 func main() {
-	fmt.Println("Hello, World!")
+	go broadcast.Startbroadcast()
+	go broadcast.ListenForBroadcast()
+	select {}
 }
