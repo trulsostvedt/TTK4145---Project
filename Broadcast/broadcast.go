@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	broadcast_IP      = "10.22.91.255:20008" // alternativt "0.0.0.0:20008"
+	broadcast_IP      = "0.0.0.0:20008" // alternativt "0.0.0.0:20008"
 	broadcastInterval = 1 * time.Second
 )
 

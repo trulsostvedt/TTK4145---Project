@@ -4,7 +4,6 @@ import (
 	broadcast "TTK4145---project/Broadcast"
 	countConfirmed "TTK4145---project/CountConfirmed"
 	cyclicCounter "TTK4145---project/CyclicCounter"
-	"time"
 )
 
 func main() {
@@ -17,5 +16,5 @@ func main() {
 	go broadcast.ListenForBroadcast(cyclic)
 	go countConfirmed.StartChecker(cyclic)
 
-	time.Sleep(20 * time.Second)
+	select {}
 }
