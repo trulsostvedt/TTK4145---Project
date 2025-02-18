@@ -8,7 +8,7 @@ Peer to Peer
 - Cyclic counter (bekrefta/ikke-bekrefta/ingen ordre)
     - Lys på når bekrefta tilstand
 - UDP Broadcast heartbeat (felles verdensbilde)
-- Når noen forsvinner trenger ingen å ta over
+- Når noen forsvinntrulsostvedt/TTK4145-projecter trenger ingen å ta over
 - TCP forbindelser mellom seg
 - Broadcast, jeg vet dette, okei nå vet jeg det, okei nå vet alle det, da blir et kall bekrefta. Siden alle har samme verdensbilde så vil alle komme til at den samme personen skal ta oppdraget. Den utfører oppdraget, når utført broadcaster den ingen ordre, eller fjerner den bekrefta ordren, og alle skjønner at den er løst, siden det er ingen andre årsaker til at en bekrefta ordre skal forsvinne. 
 - Når nettverksfeil/crash så må den forholde seg til de andre heisenes broadcast ved oppstart. 
