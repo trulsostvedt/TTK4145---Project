@@ -2,24 +2,16 @@ package main
 
 //Importing broadcast and time
 import (
-	"TTK4145---project/Broadcast"
+	elevator "TTK4145---project/Elevator"
 )
 
-
-
-type Elevator struct {
-	ID int
-	State int
-	Direction int
-	Floor int
-	OrderMatrix [4][3]int
-}
-
-
-
-
 func main() {
-	go broadcast.Startbroadcast()
-	go broadcast.ListenForBroadcast()
+	//Creating a new elevator
+	elevator := elevator.Elevator{ID: 1, State: 0, Direction: 0, Floor: 0}
+	//Starting the elevator
+	go elevator.Run()
+	//Starting the broadcast
+	go elevator.StartBroadcast()
+	go elevator.ListenForBroadcast()
 	select {}
 }

@@ -2,14 +2,14 @@ package broadcast
 
 import (
 	"fmt"
-	"time"
 	"net"
+	"time"
 )
 
 const (
-	broadcast_IP = "localhost:20008"
+	broadcast_IP      = "localhost:20008"
 	broadcastInterval = 1 * time.Second
-	message = "Jeg broadcaster!"
+	message           = "Jeg broadcaster!"
 )
 
 func Startbroadcast() {
@@ -25,7 +25,7 @@ func Startbroadcast() {
 		if err != nil {
 			fmt.Println(err)
 			return
-		}else {
+		} else {
 			fmt.Println("Broadcasted: ", message)
 		}
 		time.Sleep(broadcastInterval)
@@ -41,7 +41,7 @@ func ListenForBroadcast() {
 	conn, err := net.ListenUDP("udp", addr)
 
 	defer conn.Close()
-	
+
 	buf := make([]byte, 1024)
 
 	for {
@@ -53,8 +53,3 @@ func ListenForBroadcast() {
 		fmt.Println("Received: ", string(buf[0:n]))
 	}
 }
-
-
-
-
-

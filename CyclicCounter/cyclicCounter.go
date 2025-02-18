@@ -1,29 +1,28 @@
 package cyclicCounter
 
 import (
-	"fmt"
 	"sync"
 	"time"
 )
 
 // Enum for the states of the orders
 const (
-	NO_ORDER = 0
+	NO_ORDER    = 0
 	UNCONFIRMED = 1
-	CONFIRMED = 2
+	CONFIRMED   = 2
 )
 
 // Orderstatus is a struct that holds the status of an order
 type Orderstatus struct {
-	Floor int
-	State int
+	Floor     int
+	State     int
 	Timestamp int64
 }
 
 // CyclicCounter administers the states of the orders
 type CyclicCounter struct {
 	Orders map[int]Orderstatus // Map of orders
-	mu sync.Mutex // Mutex for the map
+	mu     sync.Mutex          // Mutex for the map
 }
 
 // NewCyclicCounter creates a new CyclicCounter instance
@@ -36,12 +35,11 @@ func (cc *CyclicCounter) RegisterOrder(floor int) {
 	cc.mu.Lock()
 	defer cc.mu.Unlock()
 
-
 	// If the order is already registered, update the timestamp
 	if _, exists := cc.Orders[floor]; exists {
 		cc.Orders[floor] = Orderstatus{
-			Floor: floor,
-			State: UNCONFIRMED,
+			Floor:     floor,
+			State:     UNCONFIRMED,
 			Timestamp: time.Now().Unix(),
 		}
 	}
@@ -67,4 +65,3 @@ func (cc *CyclicCounter) RemoveOrder(floor int) {
 
 	delete(cc.Orders, floor)
 }
-
