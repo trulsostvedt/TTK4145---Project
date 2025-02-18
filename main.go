@@ -1,6 +1,5 @@
 package main
 
-//Importing broadcast and time
 import (
 	"fmt"
 )
