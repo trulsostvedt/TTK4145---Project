@@ -9,7 +9,7 @@ import (
 
 func main() {
 	cyclic := cyclicCounter.NewCyclicCounter()
-	elevatorID := 1
+	elevatorID := 2
 	floor := 0
 	moving := false
 
