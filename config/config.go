@@ -1,6 +1,7 @@
 package config
 
 const (
+	ID = 0
 	NumFloors    = 4
 	NumButtons   = 3
 	NumElevators = 3
@@ -22,10 +23,10 @@ const (
 	MD_Up
 )
 
-type orderState int
+type OrderState int
 
 const (
-	NoOrder orderState = iota
+	NoOrder OrderState = iota
 	Unconfirmed
 	Confirmed
 )
@@ -39,8 +40,9 @@ const (
 )
 
 type Elevator struct {
+	ID        int
 	State     ElevatorState
 	Direction MotorDirection
 	Floor     int
-	Queue     [NumFloors][NumButtons]orderState
+	Queue     [NumFloors][NumButtons]OrderState
 }

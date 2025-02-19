@@ -4,6 +4,7 @@ import (
 	"TTK4145---project/Network-go/network/bcast"
 	"TTK4145---project/Network-go/network/localip"
 	"TTK4145---project/Network-go/network/peers"
+	"TTK4145---project/config"
 	"flag"
 	"fmt"
 	"os"
@@ -14,17 +15,24 @@ import (
 // Note that all members we want to transmit must be public. Any private members
 //
 //	will be received as zero-values.
-type HelloMsg struct {
-	Message string
-	Iter    int
-}
 
-func main() {
+func network() {
 	// Our id can be anything. Here we pass it on the command line, using
 	//  `go run main.go -id=our_id`
 	var id string
 	flag.StringVar(&id, "id", "", "id of this peer")
 	flag.Parse()
+
+	// make the elevator from config.go
+	elevator := config.Elevator{
+		ID:        config.ID,
+		State:     config.Idle,
+		Direction: config.MD_Stop,
+		Floor:     0,
+		Queue:     [config.NumFloors][config.NumButtons]config.OrderState{},
+	}
+
+	elevator.ID = config.ID
 
 	// ... or alternatively, we can use the local IP address.
 	// (But since we can run multiple programs on the same PC, we also append the
@@ -48,20 +56,19 @@ func main() {
 	go peers.Receiver(15647, peerUpdateCh)
 
 	// We make channels for sending and receiving our custom data types
-	helloTx := make(chan HelloMsg)
-	helloRx := make(chan HelloMsg)
+	elevatorTx := make(chan config.Elevator)  // Transmitter
+	elevatorRx := make(chan config.Elevator)  // Receiver
 	// ... and start the transmitter/receiver pair on some port
 	// These functions can take any number of channels! It is also possible to
 	//  start multiple transmitters/receivers on the same port.
-	go bcast.Transmitter(16569, helloTx)
-	go bcast.Receiver(16569, helloRx)
+	go bcast.Transmitter(16569, elevatorTx)
+	go bcast.Receiver(16569, elevatorRx)
 
 	// The example message. We just send one of these every second.
 	go func() {
-		helloMsg := HelloMsg{"Hello from " + id, 0}
+		elevatorMsg := elevator
 		for {
-			helloMsg.Iter++
-			helloTx <- helloMsg
+			elevatorTx <- elevatorMsg
 			time.Sleep(1 * time.Second)
 		}
 	}()
@@ -75,7 +82,7 @@ func main() {
 			fmt.Printf("  New:      %q\n", p.New)
 			fmt.Printf("  Lost:     %q\n", p.Lost)
 
-		case a := <-helloRx:
+		case a := <-elevatorRx:
 			fmt.Printf("Received: %#v\n", a)
 		}
 	}
