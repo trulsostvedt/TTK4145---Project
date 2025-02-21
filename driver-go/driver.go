@@ -6,18 +6,15 @@ import (
 	"fmt"
 )
 
-func RunElevator(elevatorInstance *config.Elevator) {
+func RunElevator() {
 
-	numFloors := config.NumFloors
+	numFloors := 4
+
 
 	elevio.Init("localhost:15657", numFloors)
 
 	var d elevio.MotorDirection = elevio.MD_Up
-	var dir config.MotorDirection = config.MD_Up
-	var elevState = config.Moving
-	elevatorInstance.State = elevState
-	elevatorInstance.Direction = dir
-
+	var dir = config.MD_Up
 	//elevio.SetMotorDirection(d)
 
 	drv_buttons := make(chan elevio.ButtonEvent)
@@ -42,21 +39,21 @@ func RunElevator(elevatorInstance *config.Elevator) {
 			if a == numFloors-1 {
 				d = elevio.MD_Down
 				dir = config.MD_Down
+
 			} else if a == 0 {
 				d = elevio.MD_Up
 				dir = config.MD_Up
 			}
+
 			elevio.SetMotorDirection(d)
-			elevatorInstance.Direction = dir
+			config.ElevatorInstance.Direction = dir
 
 		case a := <-drv_obstr:
 			fmt.Printf("%+v\n", a)
 			if a {
 				elevio.SetMotorDirection(elevio.MD_Stop)
-				elevatorInstance.Direction = elevio.MD_Stop
 			} else {
 				elevio.SetMotorDirection(d)
-				elevatorInstance.Direction = dir
 			}
 
 		case a := <-drv_stop:

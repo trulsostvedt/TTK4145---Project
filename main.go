@@ -10,7 +10,7 @@ import (
 func main() {
 
 	go network.Network(&config.ElevatorInstance)
-	go driver.RunElevator(&config.ElevatorInstance)
+	go driver.RunElevator()
 
 	select {}
 }
