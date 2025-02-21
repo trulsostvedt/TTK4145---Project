@@ -4,14 +4,12 @@ import (
 	network "TTK4145---project/Network-go"
 	"TTK4145---project/config"
 	"flag"
-	"fmt"
+	"time"
 )
 
 func main() {
 
-	flag.Parse()
-	fmt.Println("Hello World")
-	network.Network()
+	go network.Network(&config.ElevatorInstance)
 
 	select {}
 }

@@ -15,12 +15,11 @@ import (
 //
 //	will be received as zero-values.
 
-func Network() {
+func Network(elevatorInstance *config.Elevator) {
 	// Our id can be anything. Here we pass it on the command line, using
 	//  `go run main.go -id=our_id`
 
-	var elevator = config.ElevatorInstance
-	var id = config.ElevatorInstance.ID
+	var id = elevatorInstance.ID
 
 	// ... or alternatively, we can use the local IP address.
 	// (But since we can run multiple programs on the same PC, we also append the
@@ -54,9 +53,8 @@ func Network() {
 
 	// The example message. We just send one of these every second.
 	go func() {
-		elevatorMsg := elevator
 		for {
-			elevatorTx <- elevatorMsg
+			elevatorTx <- *elevatorInstance
 			time.Sleep(1 * time.Second)
 		}
 	}()
