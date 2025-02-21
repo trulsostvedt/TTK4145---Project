@@ -1,5 +1,10 @@
 # TTK4145---Project
 
+Kjør programmet:
+```
+go run main.go -id=your_id
+```
+
 Dette prosjektet tar for seg sanntidsprogrammering av N heiser som oppererer over M etasjer. 
 
 

@@ -1,7 +1,6 @@
 package config
 
 const (
-	ID = 0
 	NumFloors    = 4
 	NumButtons   = 3
 	NumElevators = 3
@@ -40,7 +39,7 @@ const (
 )
 
 type Elevator struct {
-	ID        int
+	ID        string
 	State     ElevatorState
 	Direction MotorDirection
 	Floor     int

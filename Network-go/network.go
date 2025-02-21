@@ -16,23 +16,24 @@ import (
 //
 //	will be received as zero-values.
 
-func network() {
+var id string
+
+func init() {
+	flag.StringVar(&id, "id", "", "id of this peer")
+}
+
+func Network() {
 	// Our id can be anything. Here we pass it on the command line, using
 	//  `go run main.go -id=our_id`
-	var id string
-	flag.StringVar(&id, "id", "", "id of this peer")
-	flag.Parse()
 
 	// make the elevator from config.go
 	elevator := config.Elevator{
-		ID:        config.ID,
+		ID:        id,
 		State:     config.Idle,
 		Direction: config.MD_Stop,
 		Floor:     0,
 		Queue:     [config.NumFloors][config.NumButtons]config.OrderState{},
 	}
-
-	elevator.ID = config.ID
 
 	// ... or alternatively, we can use the local IP address.
 	// (But since we can run multiple programs on the same PC, we also append the
@@ -56,8 +57,8 @@ func network() {
 	go peers.Receiver(15647, peerUpdateCh)
 
 	// We make channels for sending and receiving our custom data types
-	elevatorTx := make(chan config.Elevator)  // Transmitter
-	elevatorRx := make(chan config.Elevator)  // Receiver
+	elevatorTx := make(chan config.Elevator) // Transmitter
+	elevatorRx := make(chan config.Elevator) // Receiver
 	// ... and start the transmitter/receiver pair on some port
 	// These functions can take any number of channels! It is also possible to
 	//  start multiple transmitters/receivers on the same port.
