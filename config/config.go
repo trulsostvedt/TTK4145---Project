@@ -45,3 +45,6 @@ type Elevator struct {
 	Floor     int
 	Queue     [NumFloors][NumButtons]OrderState
 }
+
+var ElevatorInstance Elevator
+

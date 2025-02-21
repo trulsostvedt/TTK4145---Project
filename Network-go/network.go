@@ -5,7 +5,6 @@ import (
 	"TTK4145---project/Network-go/network/localip"
 	"TTK4145---project/Network-go/network/peers"
 	"TTK4145---project/config"
-	"flag"
 	"fmt"
 	"os"
 	"time"
@@ -16,24 +15,12 @@ import (
 //
 //	will be received as zero-values.
 
-var id string
-
-func init() {
-	flag.StringVar(&id, "id", "", "id of this peer")
-}
-
 func Network() {
 	// Our id can be anything. Here we pass it on the command line, using
 	//  `go run main.go -id=our_id`
 
-	// make the elevator from config.go
-	elevator := config.Elevator{
-		ID:        id,
-		State:     config.Idle,
-		Direction: config.MD_Stop,
-		Floor:     0,
-		Queue:     [config.NumFloors][config.NumButtons]config.OrderState{},
-	}
+	var elevator = config.ElevatorInstance
+	var id = config.ElevatorInstance.ID
 
 	// ... or alternatively, we can use the local IP address.
 	// (But since we can run multiple programs on the same PC, we also append the
