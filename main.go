@@ -2,14 +2,15 @@ package main
 
 import (
 	network "TTK4145---project/Network-go"
-	"TTK4145---project/config"
+	config "TTK4145---project/config"
+	driver "TTK4145---project/driver-go"
 	"flag"
-	"time"
 )
 
 func main() {
 
 	go network.Network(&config.ElevatorInstance)
+	go driver.RunElevator(&config.ElevatorInstance)
 
 	select {}
 }
