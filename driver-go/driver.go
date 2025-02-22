@@ -1,8 +1,8 @@
 package driver
 
 import (
-	"TTK4145---project/Driver-go/elevio"
 	"TTK4145---project/config"
+	"TTK4145---project/driver-go/elevio"
 	"fmt"
 )
 
@@ -10,7 +10,7 @@ func RunElevator() {
 
 	numFloors := config.NumFloors
 
-	elevio.Init("localhost:15657", numFloors) // default 15657
+	elevio.Init("localhost:12345", numFloors) // default 15657
 
 	var d elevio.MotorDirection = elevio.MD_Stop
 
@@ -30,12 +30,12 @@ func RunElevator() {
 		select {
 		case a := <-drv_buttons:
 			fmt.Printf("%+v\n", a)
-            if a.Button == elevio.BT_Cab {
-                config.ElevatorInstance.Queue[a.Floor][a.Button] = config.Confirmed
-			    elevio.SetButtonLamp(a.Button, a.Floor, true)
-            } else {
-                config.ElevatorInstance.Queue[a.Floor][a.Button] = config.Unconfirmed
-            }
+			if a.Button == elevio.BT_Cab {
+				config.ElevatorInstance.Queue[a.Floor][a.Button] = config.Confirmed
+				elevio.SetButtonLamp(a.Button, a.Floor, true)
+			} else {
+				config.ElevatorInstance.Queue[a.Floor][a.Button] = config.Unconfirmed
+			}
 
 		case a := <-drv_floors:
 			config.ElevatorInstance.Floor = a

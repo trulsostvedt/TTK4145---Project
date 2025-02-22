@@ -1,8 +1,8 @@
 package hra
 
 import (
-	"TTK4145---project/Driver-go/elevio"
 	"TTK4145---project/config"
+	"TTK4145---project/driver-go/elevio"
 	"encoding/json"
 	"fmt"
 	"os/exec"

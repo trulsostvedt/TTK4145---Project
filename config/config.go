@@ -1,7 +1,7 @@
 package config
 
 import (
-	"TTK4145---project/Driver-go/elevio"
+	"TTK4145---project/driver-go/elevio"
 )
 
 const (
