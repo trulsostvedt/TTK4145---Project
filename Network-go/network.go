@@ -85,6 +85,53 @@ func Network(elevatorInstance *config.Elevator) {
 
 			config.Elevators[a.ID] = elev
 
+			SyncHallRequests()
+
 		}
 	}
+}
+
+func SyncHallRequests() {
+
+	// if all elevators have the same unconfirmed request, make the request confirmed
+	for i := 0; i < config.NumFloors; i++ {
+		isConfirmedUp := true
+		for _, elev := range config.Elevators {
+			if elev.Queue[i][config.ButtonUp] != config.Unconfirmed {
+				isConfirmedUp = false
+				break
+			}
+		}
+		if isConfirmedUp {
+			config.ElevatorInstance.Queue[i][config.ButtonUp] = config.Confirmed
+		}
+
+		isConfirmedDown := true
+		for _, elev := range config.Elevators {
+			if elev.Queue[i][config.ButtonDown] != config.Unconfirmed {
+				isConfirmedDown = false
+				break
+			}
+		}
+		if isConfirmedDown {
+			config.ElevatorInstance.Queue[i][config.ButtonDown] = config.Confirmed
+		}
+	}
+
+	// if one elevator is one step ahead, make the request the same as the one step ahead
+	for i := 0; i < config.NumFloors; i++ {
+		for _, elev := range config.Elevators {
+			up := elev.Queue[i][config.ButtonUp] - config.ElevatorInstance.Queue[i][config.ButtonUp]
+			down := elev.Queue[i][config.ButtonDown] - config.ElevatorInstance.Queue[i][config.ButtonDown]
+
+			if up == 1 || up == -2 {
+				config.ElevatorInstance.Queue[i][config.ButtonUp] = elev.Queue[i][config.ButtonUp]
+			}
+
+			if down == 1 || down == -2 {
+				config.ElevatorInstance.Queue[i][config.ButtonDown] = elev.Queue[i][config.ButtonDown]
+			}
+		}
+	}
+
 }

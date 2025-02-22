@@ -13,7 +13,7 @@ const (
 type Button int
 
 const (
-	BunnonUp Button = iota
+	ButtonUp Button = iota
 	ButtonDown
 	ButtonCab
 )

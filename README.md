@@ -2,8 +2,8 @@
 
 
 TODO: 
-- Implementere syncing av kø så alle har samme kø på hall requests
-- Implementere confirmations av ordre og fjerning av ordre
+- Implementere syncing av kø så alle har samme kø på hall requests  // mulig ferdig?
+- Implementere confirmations av ordre og fjerning av ordre  // mulig ferdig?
 - Få heisen til å utføre ordre fra HRA
 
 
