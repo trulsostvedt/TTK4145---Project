@@ -68,8 +68,23 @@ func Network(elevatorInstance *config.Elevator) {
 			fmt.Printf("  New:      %q\n", p.New)
 			fmt.Printf("  Lost:     %q\n", p.Lost)
 
+			for _, lostPeer := range p.Lost {
+				delete(config.Elevators, lostPeer)
+			}
+
 		case a := <-elevatorRx:
 			fmt.Printf("Received: %#v\n", a)
+
+			elev := config.Elevator{
+				ID:        a.ID,
+				State:     a.State,
+				Direction: a.Direction,
+				Floor:     a.Floor,
+				Queue:     a.Queue,
+			}
+
+			config.Elevators[a.ID] = elev
+
 		}
 	}
 }
