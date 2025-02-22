@@ -8,12 +8,12 @@ import (
 
 func RunElevator() {
 
-	numFloors := 4
+	numFloors := config.NumFloors
 
-	elevio.Init("localhost:12345", numFloors)
+	elevio.Init("localhost:15657", numFloors) // default 15657
 
-	var d elevio.MotorDirection = elevio.MD_Up
-	
+	var d elevio.MotorDirection = elevio.MD_Stop
+
 	//elevio.SetMotorDirection(d)
 
 	drv_buttons := make(chan elevio.ButtonEvent)
@@ -30,7 +30,12 @@ func RunElevator() {
 		select {
 		case a := <-drv_buttons:
 			fmt.Printf("%+v\n", a)
-			elevio.SetButtonLamp(a.Button, a.Floor, true)
+            if a.Button == elevio.BT_Cab {
+                config.ElevatorInstance.Queue[a.Floor][a.Button] = config.Confirmed
+			    elevio.SetButtonLamp(a.Button, a.Floor, true)
+            } else {
+                config.ElevatorInstance.Queue[a.Floor][a.Button] = config.Unconfirmed
+            }
 
 		case a := <-drv_floors:
 			config.ElevatorInstance.Floor = a
