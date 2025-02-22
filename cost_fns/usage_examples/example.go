@@ -64,7 +64,7 @@ func main(){
     }
     
     output := new(map[string][][2]bool)
-    err = json.Unmarshal(ret, &output)
+    err = json.Unmarshal(ret, &output) 
     if err != nil {
         fmt.Println("json.Unmarshal error: ", err)
         return

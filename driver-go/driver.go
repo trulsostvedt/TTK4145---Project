@@ -10,11 +10,10 @@ func RunElevator() {
 
 	numFloors := 4
 
-
-	elevio.Init("localhost:15657", numFloors)
+	elevio.Init("localhost:12345", numFloors)
 
 	var d elevio.MotorDirection = elevio.MD_Up
-	var dir = config.MD_Up
+	
 	//elevio.SetMotorDirection(d)
 
 	drv_buttons := make(chan elevio.ButtonEvent)
@@ -38,15 +37,13 @@ func RunElevator() {
 			fmt.Printf("%+v\n", a)
 			if a == numFloors-1 {
 				d = elevio.MD_Down
-				dir = config.MD_Down
 
 			} else if a == 0 {
 				d = elevio.MD_Up
-				dir = config.MD_Up
 			}
 
 			elevio.SetMotorDirection(d)
-			config.ElevatorInstance.Direction = dir
+			config.ElevatorInstance.Direction = d
 
 		case a := <-drv_obstr:
 			fmt.Printf("%+v\n", a)

@@ -1,5 +1,9 @@
 package config
 
+import (
+	"TTK4145---project/Driver-go/elevio"
+)
+
 const (
 	NumFloors    = 4
 	NumButtons   = 3
@@ -14,13 +18,13 @@ const (
 	ButtonCab
 )
 
-type MotorDirection int
+// type MotorDirection int
 
-const (
-	MD_Down MotorDirection = iota - 1
-	MD_Stop
-	MD_Up
-)
+// const (
+// 	MD_Down MotorDirection = iota - 1
+// 	MD_Stop
+// 	MD_Up
+// )
 
 type OrderState int
 
@@ -41,10 +45,11 @@ const (
 type Elevator struct {
 	ID        string
 	State     ElevatorState
-	Direction MotorDirection
+	Direction elevio.MotorDirection
 	Floor     int
 	Queue     [NumFloors][NumButtons]OrderState
 }
 
 var ElevatorInstance Elevator
 
+var Elevators map[string]Elevator
