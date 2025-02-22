@@ -1,5 +1,13 @@
 # TTK4145---Project
 
+
+TODO: 
+- Implementere syncing av kø så alle har samme kø på hall requests
+- Implementere confirmations av ordre og fjerning av ordre
+- Få heisen til å utføre ordre fra HRA
+
+
+
 Kjør programmet:
 ```
 go run main.go -id=your_id
