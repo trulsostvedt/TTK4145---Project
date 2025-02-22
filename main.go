@@ -18,6 +18,7 @@ func main() {
 
 func init() {
 	flag.StringVar(&config.ElevatorInstance.ID, "id", "", "id of this peer")
+	flag.StringVar(&config.Port, "port", "15657", "port to listen on")
 	flag.Parse()
 
 	config.ElevatorInstance = config.Elevator{

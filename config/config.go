@@ -4,6 +4,8 @@ import (
 	"TTK4145---project/driver-go/elevio"
 )
 
+var Port = "15657"
+
 const (
 	NumFloors    = 4
 	NumButtons   = 3

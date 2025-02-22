@@ -10,7 +10,7 @@ func RunElevator() {
 
 	numFloors := config.NumFloors
 
-	elevio.Init("localhost:12345", numFloors) // default 15657
+	elevio.Init("localhost:"+config.Port, numFloors) // default 15657
 
 	var d elevio.MotorDirection = elevio.MD_Stop
 
