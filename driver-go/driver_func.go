@@ -16,10 +16,16 @@ func decideDir() {
 	if config.ElevatorInstance.Floor == 0 && config.ElevatorInstance.Direction == elevio.MD_Down {
 		config.ElevatorInstance.Direction = elevio.MD_Stop
 		elevio.SetMotorDirection(elevio.MD_Stop)
+		return
 	}
 	if config.ElevatorInstance.Floor == config.NumFloors-1 && config.ElevatorInstance.Direction == elevio.MD_Up {
 		config.ElevatorInstance.Direction = elevio.MD_Stop
 		elevio.SetMotorDirection(elevio.MD_Stop)
+		return
+	}
+
+	if config.ElevatorInstance.State == config.DoorOpen {
+		return
 	}
 
 	queue := <-config.MyQueue
@@ -32,7 +38,7 @@ func decideDir() {
 		}
 		if reachedFloor {
 			elevio.SetMotorDirection(elevio.MD_Stop)
-			openDoor()
+			go openDoor()
 
 		}
 	}
@@ -75,7 +81,12 @@ func reachedFloor() bool {
 func openDoor() {
 	elevio.SetDoorOpenLamp(true)
 	config.ElevatorInstance.State = config.DoorOpen
-	time.Sleep(3 * time.Second)
+	time1 := time.Now()
+	for {
+		if time.Since(time1) > 3*time.Second {
+			break
+		}
+	}
 	elevio.SetDoorOpenLamp(false)
 	config.ElevatorInstance.State = config.Idle
 }
