@@ -10,7 +10,7 @@ func removeOrder(floor, button int) {
 	config.ElevatorInstance.Queue[floor][button] = config.NoOrder
 }
 
-func decideDir() elevio.MotorDirection {
+func decideDir() {
 
 	queue := <-config.MyQueue
 
@@ -21,8 +21,9 @@ func decideDir() elevio.MotorDirection {
 			reachedFloor = true
 		}
 		if reachedFloor {
+			elevio.SetMotorDirection(elevio.MD_Stop)
 			openDoor()
-			return elevio.MD_Stop
+
 		}
 	}
 
@@ -30,20 +31,25 @@ func decideDir() elevio.MotorDirection {
 		if queue[i][config.ButtonUp] || queue[i][config.ButtonDown] || queue[i][config.ButtonCab] {
 			if i > config.ElevatorInstance.Floor {
 				config.ElevatorInstance.State = config.Moving
-				return elevio.MD_Up
+				config.ElevatorInstance.Direction = elevio.MD_Up
+				elevio.SetMotorDirection(elevio.MD_Up)
 			} else if i < config.ElevatorInstance.Floor {
 				config.ElevatorInstance.State = config.Moving
-				return elevio.MD_Down
+				config.ElevatorInstance.Direction = elevio.MD_Down
+				elevio.SetMotorDirection(elevio.MD_Down)
 			} else {
 				// config.ElevatorInstance.Queue[i][config.ButtonUp] = config.NoOrder
 				// config.ElevatorInstance.Queue[i][config.ButtonDown] = config.NoOrder
 				config.ElevatorInstance.State = config.Idle
-				return elevio.MD_Stop
+				config.ElevatorInstance.Direction = elevio.MD_Stop
+				elevio.SetMotorDirection(elevio.MD_Stop)
+
 			}
 		}
 	}
 	config.ElevatorInstance.State = config.Idle
-	return elevio.MD_Stop
+	config.ElevatorInstance.Direction = elevio.MD_Stop
+	elevio.SetMotorDirection(elevio.MD_Stop)
 }
 
 func reachedFloor() bool {

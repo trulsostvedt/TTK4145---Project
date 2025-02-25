@@ -37,19 +37,13 @@ func RunElevator() {
 				config.ElevatorInstance.Queue[a.Floor][a.Button] = config.Unconfirmed
 			}
 
-			d = decideDir()
-			elevio.SetMotorDirection(d)
-			config.ElevatorInstance.Direction = d
+			decideDir()
 
 		case a := <-drv_floors:
 			config.ElevatorInstance.Floor = a
 			fmt.Printf("%+v\n", a)
 
-			d = decideDir()
-
-			elevio.SetMotorDirection(d)
-			config.ElevatorInstance.Direction = d
-			
+			decideDir()
 
 		case a := <-drv_obstr:
 			fmt.Printf("%+v\n", a)
@@ -69,9 +63,8 @@ func RunElevator() {
 				}
 			}
 		case <-config.MyQueue:
-			d = decideDir()
-			elevio.SetMotorDirection(d)
-			config.ElevatorInstance.Direction = d
+			decideDir()
+
 		}
 	}
 }
