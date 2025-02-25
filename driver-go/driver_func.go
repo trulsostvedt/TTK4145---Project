@@ -8,6 +8,7 @@ import (
 
 func removeOrder(floor, button int) {
 	config.ElevatorInstance.Queue[floor][button] = config.NoOrder
+	elevio.SetButtonLamp(elevio.ButtonType(button), floor, false)
 }
 
 func decideDir() {
@@ -22,7 +23,7 @@ func decideDir() {
 		}
 		if reachedFloor {
 			elevio.SetMotorDirection(elevio.MD_Stop)
-			// openDoor()
+			openDoor()
 
 		}
 	}
