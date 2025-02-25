@@ -13,6 +13,15 @@ func removeOrder(floor, button int) {
 
 func decideDir() {
 
+	if config.ElevatorInstance.Floor == 0 && config.ElevatorInstance.Direction == elevio.MD_Down {
+		config.ElevatorInstance.Direction = elevio.MD_Stop
+		elevio.SetMotorDirection(elevio.MD_Stop)
+	}
+	if config.ElevatorInstance.Floor == config.NumFloors-1 && config.ElevatorInstance.Direction == elevio.MD_Up {
+		config.ElevatorInstance.Direction = elevio.MD_Stop
+		elevio.SetMotorDirection(elevio.MD_Stop)
+	}
+
 	queue := <-config.MyQueue
 
 	reachedFloor := false
