@@ -21,6 +21,8 @@ func init() {
 	flag.StringVar(&config.Port, "port", "15657", "port to listen on")
 	flag.Parse()
 
+	
+
 	config.ElevatorInstance = config.Elevator{
 		ID:        config.ElevatorInstance.ID,
 		State:     config.Idle,
