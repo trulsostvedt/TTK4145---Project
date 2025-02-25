@@ -3,7 +3,6 @@ package driver
 import (
 	"TTK4145---project/config"
 	"TTK4145---project/driver-go/elevio"
-	"fmt"
 	"time"
 )
 
@@ -23,7 +22,6 @@ func decideDir() {
 		}
 		if reachedFloor {
 			elevio.SetMotorDirection(elevio.MD_Stop)
-			fmt.Println("Stopping")
 			// openDoor()
 
 		}
@@ -34,13 +32,11 @@ func decideDir() {
 			if i > config.ElevatorInstance.Floor {
 				config.ElevatorInstance.State = config.Moving
 				config.ElevatorInstance.Direction = elevio.MD_Up
-				fmt.Println("Moving up")
 				elevio.SetMotorDirection(elevio.MD_Up)
 				break
 			} else if i < config.ElevatorInstance.Floor {
 				config.ElevatorInstance.State = config.Moving
 				config.ElevatorInstance.Direction = elevio.MD_Down
-				fmt.Println("Moving down")
 				elevio.SetMotorDirection(elevio.MD_Down)
 				break
 			} else {
@@ -48,14 +44,12 @@ func decideDir() {
 				// config.ElevatorInstance.Queue[i][config.ButtonDown] = config.NoOrder
 				config.ElevatorInstance.State = config.Idle
 				config.ElevatorInstance.Direction = elevio.MD_Stop
-				fmt.Println("Stopping")
 				elevio.SetMotorDirection(elevio.MD_Stop)
-				
 
 			}
 		}
 	}
-	
+
 }
 
 func reachedFloor() bool {
