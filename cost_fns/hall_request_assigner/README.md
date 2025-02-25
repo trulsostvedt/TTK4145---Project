@@ -87,6 +87,7 @@ Run `build.sh`, or copy its one line of content and run that.
  - `--travelDuration` : Travel time between two floors in milliseconds (default 2500)
  - `--doorOpenDuration` : Door open time in milliseconds (default 3000)
  - `--clearRequestType` : When stopping at a floor, clear either `all` requests or only those `inDirn` (default)
+  - Example: `./hall_request_assigner.exe --clearRequestType=all`
  - `--includeCab` : Includes the cab requests in the output. The output becomes a 3xN boolean matrix for each elevator (`[[up-0, down-0, cab-0], [...],...]`). (disabled by default)
  
 If JSON input is not passed on the command line, the program will read the first line from stdin instead. JSON output is written to stdout.

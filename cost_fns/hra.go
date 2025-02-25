@@ -71,8 +71,18 @@ func HRA() {
 		}
 	}
 
+	var hallRequests [][2]bool
+	for i := 0; i < config.NumFloors; i++ {
+		hallRequests = append(hallRequests, [2]bool{false, false})
+		for j := 0; j < config.NumButtons-1; j++ {
+			if config.ElevatorInstance.Queue[i][j] == config.Confirmed {
+				hallRequests[i][j] = true
+			}
+		}
+	}
+
 	input := HRAInput{
-		HallRequests: [][2]bool{{false, false}, {true, false}, {false, false}, {false, true}},
+		HallRequests: hallRequests,
 		States:       make(map[string]HRAElevState),
 	}
 
@@ -91,14 +101,14 @@ func HRA() {
 		return
 	}
 
-	ret, err := exec.Command("../hall_request_assigner/"+hraExecutable, "-i", string(jsonBytes)).CombinedOutput()
+	ret, err := exec.Command("./cost_fns/hall_request_assigner/"+hraExecutable, "-i", string(jsonBytes), "--includeCab").CombinedOutput()
 	if err != nil {
 		fmt.Println("exec.Command error: ", err)
 		fmt.Println(string(ret))
 		return
 	}
 
-	output := new(map[string][][2]bool)
+	output := new(map[string][][3]bool)
 	err = json.Unmarshal(ret, &output)
 	if err != nil {
 		fmt.Println("json.Unmarshal error: ", err)
@@ -109,4 +119,7 @@ func HRA() {
 	for k, v := range *output {
 		fmt.Printf("%6v :  %+v\n", k, v)
 	}
+
+	config.MyQueue <- (*output)[config.ElevatorInstance.ID]
+
 }

@@ -5,10 +5,13 @@ import (
 	"TTK4145---project/Network-go/network/localip"
 	"TTK4145---project/Network-go/network/peers"
 	"TTK4145---project/config"
+	hra "TTK4145---project/cost_fns"
 	"fmt"
 	"os"
 	"time"
 )
+
+
 
 // We define some custom struct to send over the network.
 // Note that all members we want to transmit must be public. Any private members
@@ -86,6 +89,8 @@ func Network(elevatorInstance *config.Elevator) {
 			config.Elevators[a.ID] = elev
 
 			SyncHallRequests()
+
+			hra.HRA()
 
 		}
 	}

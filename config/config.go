@@ -6,6 +6,8 @@ import (
 
 var Port = "15657"
 
+var MyQueue = make(chan [][3]bool, 10)
+
 const (
 	NumFloors    = 4
 	NumButtons   = 3

@@ -37,15 +37,15 @@ func RunElevator() {
 				config.ElevatorInstance.Queue[a.Floor][a.Button] = config.Unconfirmed
 			}
 
+			d = decideDir()
+			elevio.SetMotorDirection(d)
+			config.ElevatorInstance.Direction = d
+
 		case a := <-drv_floors:
 			config.ElevatorInstance.Floor = a
 			fmt.Printf("%+v\n", a)
-			if a == numFloors-1 {
-				d = elevio.MD_Down
 
-			} else if a == 0 {
-				d = elevio.MD_Up
-			}
+			d = decideDir()
 
 			elevio.SetMotorDirection(d)
 			config.ElevatorInstance.Direction = d
@@ -54,8 +54,10 @@ func RunElevator() {
 			fmt.Printf("%+v\n", a)
 			if a {
 				elevio.SetMotorDirection(elevio.MD_Stop)
+				config.ElevatorInstance.Direction = elevio.MD_Stop
 			} else {
 				elevio.SetMotorDirection(d)
+				config.ElevatorInstance.Direction = d
 			}
 
 		case a := <-drv_stop:
@@ -65,6 +67,10 @@ func RunElevator() {
 					elevio.SetButtonLamp(b, f, false)
 				}
 			}
+		case <-config.MyQueue:
+			d = decideDir()
+			elevio.SetMotorDirection(d)
+			config.ElevatorInstance.Direction = d
 		}
 	}
 }
