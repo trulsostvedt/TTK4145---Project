@@ -5,6 +5,7 @@ import (
 	"TTK4145---project/driver-go/elevio"
 	"encoding/json"
 	"fmt"
+	"os"
 	"os/exec"
 	"runtime"
 )
@@ -36,6 +37,11 @@ func HRA() {
 	switch runtime.GOOS {
 	case "linux":
 		hraExecutable = "hall_request_assigner"
+		err := os.Chmod("./cost_fns/hall_request_assigner/"+hraExecutable, 0755)
+		if err != nil {
+			fmt.Println("Error setting executable permissions:", err)
+			return
+		}
 	case "windows":
 		hraExecutable = "hall_request_assigner.exe"
 	default:
