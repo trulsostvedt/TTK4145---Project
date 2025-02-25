@@ -41,6 +41,15 @@ func decideDir() elevio.MotorDirection {
 	return elevio.MD_Stop
 }
 
+// function to prevent the elevator from moving above the top floor or below the bottom floor
+func checkFloorLimit() {
+	if (config.ElevatorInstance.Floor == 0 && config.ElevatorInstance.Direction == elevio.MD_Down) {
+		config.ElevatorInstance.Direction = elevio.MD_Stop
+	} else if (config.ElevatorInstance.Floor == config.NumFloors-1 && config.ElevatorInstance.Direction == elevio.MD_Up) {
+		config.ElevatorInstance.Direction = elevio.MD_Stop
+	}
+}
+
 func reachedFloor() bool {
 	queue := <-config.MyQueue
 	for i := 0; i < config.NumButtons; i++ {
@@ -58,3 +67,4 @@ func openDoor() {
 	elevio.SetDoorOpenLamp(false)
 	config.ElevatorInstance.State = config.Idle
 }
+
