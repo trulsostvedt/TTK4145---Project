@@ -49,6 +49,7 @@ func RunElevator() {
 
 			elevio.SetMotorDirection(d)
 			config.ElevatorInstance.Direction = d
+			
 
 		case a := <-drv_obstr:
 			fmt.Printf("%+v\n", a)
