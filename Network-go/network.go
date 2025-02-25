@@ -57,7 +57,7 @@ func Network(elevatorInstance *config.Elevator) {
 	go func() {
 		for {
 			elevatorTx <- *elevatorInstance
-			time.Sleep(1 * time.Second)
+			time.Sleep(20 * time.Millisecond)
 		}
 	}()
 
