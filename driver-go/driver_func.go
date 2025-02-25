@@ -21,7 +21,6 @@ func decideDir() elevio.MotorDirection {
 			reachedFloor = true
 		}
 		if reachedFloor {
-			openDoor()
 			return elevio.MD_Stop
 		}
 	}
