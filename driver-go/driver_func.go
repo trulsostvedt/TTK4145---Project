@@ -21,6 +21,7 @@ func decideDir() elevio.MotorDirection {
 			reachedFloor = true
 		}
 		if reachedFloor {
+			openDoor()
 			return elevio.MD_Stop
 		}
 	}
@@ -28,24 +29,16 @@ func decideDir() elevio.MotorDirection {
 	for i := 0; i < config.NumFloors; i++ {
 		if queue[i][config.ButtonUp] || queue[i][config.ButtonDown] || queue[i][config.ButtonCab] {
 			if i > config.ElevatorInstance.Floor {
-				config.ElevatorInstance.State = config.Moving
-				config.ElevatorInstance.Direction = elevio.MD_Up
 				return elevio.MD_Up
 			} else if i < config.ElevatorInstance.Floor {
-				config.ElevatorInstance.State = config.Moving
-				config.ElevatorInstance.Direction = elevio.MD_Down
 				return elevio.MD_Down
 			} else {
 				// config.ElevatorInstance.Queue[i][config.ButtonUp] = config.NoOrder
 				// config.ElevatorInstance.Queue[i][config.ButtonDown] = config.NoOrder
-				config.ElevatorInstance.State = config.Idle
-				config.ElevatorInstance.Direction = elevio.MD_Stop
 				return elevio.MD_Stop
 			}
 		}
 	}
-	config.ElevatorInstance.State = config.Idle
-	config.ElevatorInstance.Direction = elevio.MD_Stop
 	return elevio.MD_Stop
 }
 
