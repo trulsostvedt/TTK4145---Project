@@ -22,7 +22,7 @@ func decideDir() {
 		}
 		if reachedFloor {
 			elevio.SetMotorDirection(elevio.MD_Stop)
-			openDoor()
+			// openDoor()
 
 		}
 	}

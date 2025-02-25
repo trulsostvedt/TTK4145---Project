@@ -6,11 +6,13 @@ import (
 	"fmt"
 )
 
+func InitElevio() {
+	elevio.Init("localhost:"+config.Port, config.NumFloors) // default 15657
+}
+
 func RunElevator() {
 
 	numFloors := config.NumFloors
-
-	elevio.Init("localhost:"+config.Port, numFloors) // default 15657
 
 	var d elevio.MotorDirection = elevio.MD_Stop
 
