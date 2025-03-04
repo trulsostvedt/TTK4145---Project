@@ -5,7 +5,6 @@ import (
 	"TTK4145---project/Network-go/network/localip"
 	"TTK4145---project/Network-go/network/peers"
 	"TTK4145---project/config"
-	hra "TTK4145---project/cost_fns"
 	"TTK4145---project/driver-go/elevio"
 	"fmt"
 	"os"
@@ -89,8 +88,6 @@ func Network(elevatorInstance *config.Elevator) {
 
 			SyncHallRequests()
 
-			hra.HRA()
-
 		}
 	}
 }
@@ -107,7 +104,7 @@ func SyncHallRequests() {
 			}
 		}
 		if isConfirmedUp {
-			config.ElevatorInstance.Queue[i][config.ButtonUp] = config.Confirmed
+			config.ElevatorInstance.UpdateQueue(i, config.ButtonUp, config.Confirmed)
 			elevio.SetButtonLamp(elevio.BT_HallUp, i, true)
 		}
 
@@ -120,7 +117,7 @@ func SyncHallRequests() {
 		}
 		if isConfirmedDown {
 
-			config.ElevatorInstance.Queue[i][config.ButtonDown] = config.Confirmed
+			config.ElevatorInstance.UpdateQueue(i, config.ButtonDown, config.Confirmed)
 			elevio.SetButtonLamp(elevio.BT_HallDown, i, true)
 		}
 	}
@@ -132,11 +129,11 @@ func SyncHallRequests() {
 			down := elev.Queue[i][config.ButtonDown] - config.ElevatorInstance.Queue[i][config.ButtonDown]
 
 			if up == 1 || up == -2 {
-				config.ElevatorInstance.Queue[i][config.ButtonUp] = elev.Queue[i][config.ButtonUp]
+				config.ElevatorInstance.UpdateQueue(i, config.ButtonUp, elev.Queue[i][config.ButtonUp])
 			}
 
 			if down == 1 || down == -2 {
-				config.ElevatorInstance.Queue[i][config.ButtonDown] = elev.Queue[i][config.ButtonDown]
+				config.ElevatorInstance.UpdateQueue(i, config.ButtonDown, elev.Queue[i][config.ButtonDown])
 			}
 		}
 	}

@@ -7,7 +7,7 @@ import (
 )
 
 func removeOrder(floor, button int) {
-	config.ElevatorInstance.Queue[floor][button] = config.NoOrder
+	config.ElevatorInstance.UpdateQueue(floor, config.Button(button), config.NoOrder)
 	elevio.SetButtonLamp(elevio.ButtonType(button), floor, false)
 }
 

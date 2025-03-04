@@ -31,10 +31,10 @@ func RunElevator() {
 		case a := <-drv_buttons:
 			fmt.Printf("%+v\n", a)
 			if a.Button == elevio.BT_Cab {
-				config.ElevatorInstance.Queue[a.Floor][a.Button] = config.Confirmed
+				config.ElevatorInstance.UpdateQueue(a.Floor, config.ButtonCab, config.Confirmed)
 				elevio.SetButtonLamp(a.Button, a.Floor, true)
 			} else {
-				config.ElevatorInstance.Queue[a.Floor][a.Button] = config.Unconfirmed
+				config.ElevatorInstance.UpdateQueue(a.Floor, config.Button(a.Button), config.Confirmed)
 			}
 
 			decideDir()
@@ -67,5 +67,8 @@ func RunElevator() {
 			decideDir()
 
 		}
+		
 	}
 }
+
+

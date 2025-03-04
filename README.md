@@ -2,7 +2,6 @@
 
 
 TODO: 
-- Endre Elevator state
 - Mekanisk slutter å fungere -> start på nytt
 - Når en heis mister alle andre, så må den starte på nytt
 - Test og fiks småfeil osv
