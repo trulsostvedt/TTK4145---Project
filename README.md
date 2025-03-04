@@ -2,15 +2,16 @@
 
 
 TODO: 
-- Implementere syncing av kø så alle har samme kø på hall requests  // mulig ferdig?
-- Implementere confirmations av ordre og fjerning av ordre  // mulig ferdig?
-- Få heisen til å utføre ordre fra HRA
+- Endre Elevator state
+- Mekanisk slutter å fungere -> start på nytt
+- Når en heis mister alle andre, så må den starte på nytt
+- Test og fiks småfeil osv
 
 
 
 Kjør programmet:
 ```
-go run main.go -id=your_id
+go run main.go -id=your_id -port=your_port
 ```
 
 Dette prosjektet tar for seg sanntidsprogrammering av N heiser som oppererer over M etasjer. 
