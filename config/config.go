@@ -1,7 +1,7 @@
 package config
 
 import (
-	hra "TTK4145---project/cost_fns/hra"
+	
 	"TTK4145---project/driver-go/elevio"
 )
 
@@ -57,10 +57,7 @@ type Elevator struct {
 	Queue     [NumFloors][NumButtons]OrderState
 }
 
-func (e *Elevator) UpdateQueue(floor int, button Button, state OrderState) {
-	e.Queue[floor][button] = state
-	hra.HRA()
-}
+
 
 var ElevatorInstance Elevator
 
