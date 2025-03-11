@@ -8,7 +8,7 @@ import (
 )
 
 func removeOrder(floor, button int) {
-	UpdateQueue(floor, button, config.NoOrder)
+	UpdateQueue(floor, button, config.NoOrder, &config.ElevatorInstance)
 	elevio.SetButtonLamp(elevio.ButtonType(button), floor, false)
 }
 
@@ -18,14 +18,11 @@ func decideDir() {
 		config.ElevatorInstance.Direction = elevio.MD_Stop
 		elevio.SetMotorDirection(elevio.MD_Stop)
 		return
-	}
-	if config.ElevatorInstance.Floor == config.NumFloors-1 && config.ElevatorInstance.Direction == elevio.MD_Up {
+	} else if config.ElevatorInstance.Floor == config.NumFloors-1 && config.ElevatorInstance.Direction == elevio.MD_Up {
 		config.ElevatorInstance.Direction = elevio.MD_Stop
 		elevio.SetMotorDirection(elevio.MD_Stop)
 		return
-	}
-
-	if config.ElevatorInstance.State == config.DoorOpen {
+	} else if config.ElevatorInstance.State == config.DoorOpen {
 		elevio.SetMotorDirection(elevio.MD_Stop)
 		return
 	}
@@ -35,12 +32,12 @@ func decideDir() {
 	// Check if there is an order at the current floor and stop
 	for i := 0; i < config.NumButtons; i++ {
 		if queue[config.ElevatorInstance.Floor][i] {
+
 			removeOrder(config.ElevatorInstance.Floor, i)
 			elevio.SetMotorDirection(elevio.MD_Stop)
 			go openDoor()
 			break
 		}
-
 	}
 
 	// Check if there are orders above or below the current floor
@@ -89,7 +86,10 @@ func openDoor() {
 	decideDir()
 }
 
-func UpdateQueue(floor, button int, state config.OrderState) {
-	config.ElevatorInstance.Queue[floor][button] = state
+func UpdateQueue(floor, button int, state config.OrderState, elev *config.Elevator) {
+	config.ElevatorInstance.Queue[floor][elevio.ButtonType(button)] = state
+	if state == config.Confirmed {
+		elevio.SetButtonLamp(elevio.ButtonType(button), floor, true)
+	}
 	hra.HRA()
 }
