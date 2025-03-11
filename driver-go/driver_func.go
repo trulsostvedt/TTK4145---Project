@@ -34,9 +34,9 @@ func decideDir() {
 	// Check if there is an order at the current floor and stop
 	for i := 0; i < config.NumButtons; i++ {
 		if queue[config.ElevatorInstance.Floor][i] {
-			removeOrder(config.ElevatorInstance.Floor, i)
+
 			elevio.SetMotorDirection(elevio.MD_Stop)
-			go openDoor()
+			go openDoor(config.ElevatorInstance.Floor, i)
 			break
 		}
 
@@ -72,7 +72,7 @@ func reachedFloor() bool {
 	return false
 }
 
-func openDoor() {
+func openDoor(floor, i int) {
 	elevio.SetMotorDirection(elevio.MD_Stop)
 	config.ElevatorInstance.Direction = elevio.MD_Stop
 	elevio.SetDoorOpenLamp(true)
@@ -85,5 +85,6 @@ func openDoor() {
 	}
 	elevio.SetDoorOpenLamp(false)
 	config.ElevatorInstance.State = config.Idle
+	removeOrder(floor, i)
 	decideDir()
 }

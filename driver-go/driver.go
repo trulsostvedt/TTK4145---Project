@@ -38,7 +38,6 @@ func RunElevator() {
 			}
 
 			decideDir()
-			
 
 		case a := <-drv_floors:
 			config.ElevatorInstance.Floor = a
@@ -60,7 +59,8 @@ func RunElevator() {
 			fmt.Printf("%+v\n", a)
 			for f := 0; f < numFloors; f++ {
 				for b := elevio.ButtonType(0); b < 3; b++ {
-					elevio.SetButtonLamp(b, f, false)
+					// elevio.SetButtonLamp(b, f, false)
+					continue
 				}
 			}
 		case <-config.MyQueue:
