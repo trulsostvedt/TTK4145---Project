@@ -90,6 +90,8 @@ func UpdateQueue(floor, button int, state config.OrderState, elev *config.Elevat
 	config.ElevatorInstance.Queue[floor][elevio.ButtonType(button)] = state
 	if state == config.Confirmed {
 		elevio.SetButtonLamp(elevio.ButtonType(button), floor, true)
+	} else if state == config.NoOrder {
+		elevio.SetButtonLamp(elevio.ButtonType(button), floor, false)
 	}
 	hra.HRA()
 }
