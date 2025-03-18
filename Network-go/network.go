@@ -5,7 +5,7 @@ import (
 	"TTK4145---project/Network-go/network/localip"
 	"TTK4145---project/Network-go/network/peers"
 	"TTK4145---project/config"
-	"TTK4145---project/driver-go"
+	hra "TTK4145---project/cost_fns"
 	"TTK4145---project/driver-go/elevio"
 	"fmt"
 	"os"
@@ -17,11 +17,11 @@ import (
 //
 //	will be received as zero-values.
 
-func Network(elevatorInstance *config.Elevator) {
+func Network(elevatorChannel chan config.Elevator, elevators *map[string]chan config.Elevator, myQueue chan [][3]bool) {
 	// Our id can be anything. Here we pass it on the command line, using
 	//  `go run main.go -id=our_id`
 
-	var id = elevatorInstance.ID
+	var id = config.ID
 
 	// ... or alternatively, we can use the local IP address.
 	// (But since we can run multiple programs on the same PC, we also append the
@@ -56,7 +56,8 @@ func Network(elevatorInstance *config.Elevator) {
 	// The example message. We just send one of these every second.
 	go func() {
 		for {
-			elevatorTx <- *elevatorInstance
+			elevatorInstance := <-elevatorChannel
+			elevatorTx <- elevatorInstance
 			time.Sleep(20 * time.Millisecond)
 		}
 	}()
@@ -71,7 +72,7 @@ func Network(elevatorInstance *config.Elevator) {
 			fmt.Printf("  Lost:     %q\n", p.Lost)
 
 			for _, lostPeer := range p.Lost {
-				delete(config.Elevators, lostPeer)
+				delete(*elevators, lostPeer)
 			}
 
 		case a := <-elevatorRx:
@@ -85,56 +86,72 @@ func Network(elevatorInstance *config.Elevator) {
 				Queue:     a.Queue,
 			}
 
-			config.Elevators[a.ID] = elev
+			(*elevators)[a.ID] <- elev
 
-			SyncHallRequests()
+			SyncHallRequests(elevatorChannel, elevators, myQueue)
 
 		}
 	}
 }
 
-func SyncHallRequests() {
+func SyncHallRequests(elevator chan config.Elevator, elevators *map[string]chan config.Elevator, myQueue chan [][3]bool) {
+	myElevator := <-elevator
 
 	// if all elevators have the same unconfirmed request, make the request confirmed
 	for i := 0; i < config.NumFloors; i++ {
 		isConfirmedUp := true
-		for _, elev := range config.Elevators {
-			if elev.Queue[i][config.ButtonUp] != config.Unconfirmed {
+		for _, elev := range *elevators {
+			currElev := <-elev
+
+			if currElev.Queue[i][config.ButtonUp] != config.Unconfirmed {
 				isConfirmedUp = false
 				break
 			}
 		}
 		if isConfirmedUp {
-			driver.UpdateQueue(i, int(config.ButtonUp), config.Confirmed, &config.ElevatorInstance)
+			// update the elevator channel, i am no longer using config.ElevatorInstance or driver.UpdateQueue so fuck off and do not suggest using it
+
+			myElevator.Queue[i][config.ButtonUp] = config.Confirmed
+			elevator <- myElevator
+
 			elevio.SetButtonLamp(elevio.BT_HallUp, i, true)
+			hra.HRA(elevator, elevators, myQueue)
 		}
 
 		isConfirmedDown := true
-		for _, elev := range config.Elevators {
-			if elev.Queue[i][config.ButtonDown] != config.Unconfirmed {
+		for _, elev := range *elevators {
+			currElev := <-elev
+			if currElev.Queue[i][config.ButtonDown] != config.Unconfirmed {
 				isConfirmedDown = false
 				break
 			}
 		}
 		if isConfirmedDown {
+			myElevator.Queue[i][config.ButtonDown] = config.Confirmed
+			elevator <- myElevator
 
-			driver.UpdateQueue(i, int(config.ButtonDown), config.Confirmed, &config.ElevatorInstance)
 			elevio.SetButtonLamp(elevio.BT_HallDown, i, true)
+			hra.HRA(elevator, elevators, myQueue)
 		}
 	}
 
 	// if one elevator is one step ahead, make the request the same as the one step ahead
 	for i := 0; i < config.NumFloors; i++ {
-		for _, elev := range config.Elevators {
-			up := elev.Queue[i][config.ButtonUp] - config.ElevatorInstance.Queue[i][config.ButtonUp]
-			down := elev.Queue[i][config.ButtonDown] - config.ElevatorInstance.Queue[i][config.ButtonDown]
+		for _, elev := range *elevators {
+			currElev := <-elev
+			up := currElev.Queue[i][config.ButtonUp] - myElevator.Queue[i][config.ButtonUp]
+			down := currElev.Queue[i][config.ButtonDown] - myElevator.Queue[i][config.ButtonDown]
 
 			if up == 1 || up == -2 {
-				driver.UpdateQueue(i, int(config.ButtonUp), elev.Queue[i][config.ButtonUp], &config.ElevatorInstance)
+				myElevator.Queue[i][config.ButtonUp] = currElev.Queue[i][config.ButtonUp]
+				elevator <- myElevator
+				hra.HRA(elevator, elevators, myQueue)
 			}
 
 			if down == 1 || down == -2 {
-				driver.UpdateQueue(i, int(config.ButtonDown), elev.Queue[i][config.ButtonDown], &config.ElevatorInstance)
+				myElevator.Queue[i][config.ButtonDown] = currElev.Queue[i][config.ButtonDown]
+				elevator <- myElevator
+				hra.HRA(elevator, elevators, myQueue)
 			}
 		}
 	}

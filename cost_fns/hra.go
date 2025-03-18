@@ -31,7 +31,9 @@ type HRAInput struct {
 	States       map[string]HRAElevState `json:"states"`
 }
 
-func HRA() {
+func HRA(elevatorChannel chan config.Elevator, elevators *map[string]chan config.Elevator, myQueue chan [][3]bool) {
+
+	elevatorInstance := <-elevatorChannel
 
 	hraExecutable := ""
 	switch runtime.GOOS {
@@ -81,7 +83,7 @@ func HRA() {
 	for i := 0; i < config.NumFloors; i++ {
 		hallRequests = append(hallRequests, [2]bool{false, false})
 		for j := 0; j < config.NumButtons-1; j++ {
-			if config.ElevatorInstance.Queue[i][j] == config.Confirmed {
+			if elevatorInstance.Queue[i][j] == config.Confirmed {
 				hallRequests[i][j] = true
 			}
 		}
@@ -92,12 +94,13 @@ func HRA() {
 		States:       make(map[string]HRAElevState),
 	}
 
-	for id, elev := range config.Elevators {
+	for id, elev := range *elevators {
+		elevator := <-elev
 		input.States[id] = HRAElevState{
-			Behavior:    mapElevStateToBehavior[elev.State],
-			Floor:       elev.Floor,
-			Direction:   mapDirectionToString(elev.Direction),
-			CabRequests: mapQueueToCabRequests(elev.Queue),
+			Behavior:    mapElevStateToBehavior[elevator.State],
+			Floor:       elevator.Floor,
+			Direction:   mapDirectionToString(elevator.Direction),
+			CabRequests: mapQueueToCabRequests(elevator.Queue),
 		}
 	}
 
@@ -126,6 +129,6 @@ func HRA() {
 		fmt.Printf("%6v :  %+v\n", k, v)
 	}
 
-	config.MyQueue <- (*output)[config.ElevatorInstance.ID]
+	myQueue <- (*output)[elevatorInstance.ID]
 
 }

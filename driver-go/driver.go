@@ -2,11 +2,12 @@ package driver
 
 import (
 	"TTK4145---project/config"
+	hra "TTK4145---project/cost_fns"
 	"TTK4145---project/driver-go/elevio"
 	"fmt"
 )
 
-func RunElevator() {
+func RunElevator(elevatorInstance chan config.Elevator, elevators *map[string]chan config.Elevator, myQueue chan [][3]bool) {
 
 	numFloors := config.NumFloors
 
@@ -29,31 +30,39 @@ func RunElevator() {
 	for {
 		select {
 		case a := <-drv_buttons:
+			elevator := <-elevatorInstance
 			fmt.Printf("%+v\n", a)
 			if a.Button == elevio.BT_Cab {
-				UpdateQueue(a.Floor, int(config.ButtonCab), config.Confirmed, &config.ElevatorInstance)
+				elevator.Queue[a.Floor][config.ButtonCab] = config.Confirmed
+				elevatorInstance <- elevator
 				elevio.SetButtonLamp(a.Button, a.Floor, true)
+				hra.HRA(elevatorInstance, elevators, myQueue)
 			} else {
-				UpdateQueue(a.Floor, int(a.Button), config.Unconfirmed, &config.ElevatorInstance)
+				elevator.Queue[a.Floor][int(a.Button)] = config.Unconfirmed
+				elevatorInstance <- elevator
 			}
 
-			decideDir()
+			decideDir(elevatorInstance, myQueue)
 
 		case a := <-drv_floors:
-			config.ElevatorInstance.Floor = a
+			elevator := <-elevatorInstance
+			elevator.Floor = a
+			elevatorInstance <- elevator
 			fmt.Printf("%+v\n", a)
 			elevio.SetFloorIndicator(a)
 
-			decideDir()
+			decideDir(elevatorInstance, myQueue)
 
 		case a := <-drv_obstr:
 			fmt.Printf("%+v\n", a)
+			elevator := <-elevatorInstance
 			if a {
 				elevio.SetMotorDirection(elevio.MD_Stop)
-				config.ElevatorInstance.Direction = elevio.MD_Stop
+				elevator.Direction = elevio.MD_Stop
+				elevatorInstance <- elevator
 			} else {
 				elevio.SetMotorDirection(d)
-				config.ElevatorInstance.Direction = d
+				elevator.Direction = d
 			}
 
 		case a := <-drv_stop:
@@ -63,8 +72,8 @@ func RunElevator() {
 					elevio.SetButtonLamp(b, f, false)
 				}
 			}
-		case <-config.MyQueue:
-			decideDir()
+		case <-myQueue:
+			decideDir(elevatorInstance, myQueue)
 
 		}
 

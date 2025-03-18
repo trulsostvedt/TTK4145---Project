@@ -5,7 +5,10 @@ import (
 	"TTK4145---project/driver-go/elevio"
 )
 
-var Port = "15657"
+var (
+	Port = "15657"
+	ID = "0"
+)
 
 var MyQueue = make(chan [][3]bool, 10)
 
@@ -59,6 +62,3 @@ type Elevator struct {
 
 
 
-var ElevatorInstance Elevator
-
-var Elevators map[string]Elevator

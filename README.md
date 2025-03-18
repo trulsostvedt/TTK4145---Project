@@ -6,6 +6,8 @@ TODO:
 - Når en heis mister alle andre, så må den starte på nytt
 - Test og fiks småfeil osv
 
+- 
+
 
 
 Kjør programmet:

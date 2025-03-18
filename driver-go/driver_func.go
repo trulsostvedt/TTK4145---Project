@@ -2,96 +2,81 @@ package driver
 
 import (
 	"TTK4145---project/config"
-	hra "TTK4145---project/cost_fns"
 	"TTK4145---project/driver-go/elevio"
-	"time"
 )
 
-func removeOrder(floor, button int) {
-	UpdateQueue(floor, button, config.NoOrder, &config.ElevatorInstance)
+func removeOrder(floor, button int, elevatorInstance chan config.Elevator) {
+	elevator := <-elevatorInstance
+	elevator.Queue[floor][button] = config.NoOrder
+	elevatorInstance <- elevator
+
 	elevio.SetButtonLamp(elevio.ButtonType(button), floor, false)
 }
 
-func decideDir() {
+func decideDir(elevatorInstance chan config.Elevator, myQueue chan [][3]bool) elevio.MotorDirection {
+	elevator := <-elevatorInstance
 
-	if config.ElevatorInstance.Floor == 0 && config.ElevatorInstance.Direction == elevio.MD_Down {
-		config.ElevatorInstance.Direction = elevio.MD_Stop
-		elevio.SetMotorDirection(elevio.MD_Stop)
-		return
-	} else if config.ElevatorInstance.Floor == config.NumFloors-1 && config.ElevatorInstance.Direction == elevio.MD_Up {
-		config.ElevatorInstance.Direction = elevio.MD_Stop
-		elevio.SetMotorDirection(elevio.MD_Stop)
-		return
-	} else if config.ElevatorInstance.State == config.DoorOpen {
-		elevio.SetMotorDirection(elevio.MD_Stop)
-		return
+	if elevator.Direction == elevio.MD_Up && elevator.Floor == config.NumFloors-1 {
+		return elevio.MD_Stop
+	} else if elevator.Direction == elevio.MD_Down && elevator.Floor == 0 {
+		return elevio.MD_Stop
 	}
 
-	queue := <-config.MyQueue
-
-	// Check if there is an order at the current floor and stop
-	for i := 0; i < config.NumButtons; i++ {
-		if queue[config.ElevatorInstance.Floor][i] {
-
-			removeOrder(config.ElevatorInstance.Floor, i)
-			elevio.SetMotorDirection(elevio.MD_Stop)
-			go openDoor()
-			break
+	if elevator.State == config.Idle {
+		if isOrderAbove(elevatorInstance, myQueue) {
+			return elevio.MD_Up
+		} else if isOrderBelow(elevatorInstance, myQueue) {
+			return elevio.MD_Down
+		}
+	} else if elevator.State == config.Moving {
+		if reachedFloor(elevatorInstance, myQueue) {
+			removeOrder(elevator.Floor, int(config.ButtonCab), elevatorInstance)
+			removeOrder(elevator.Floor, int(elevator.Direction), elevatorInstance)
+			return elevio.MD_Stop
+		}
+	} else if elevator.State == config.DoorOpen {
+		if isOrderAbove(elevatorInstance, myQueue) {
+			return elevio.MD_Up
+		} else if isOrderBelow(elevatorInstance, myQueue) {
+			return elevio.MD_Down
+		} else {
+			return elevio.MD_Stop
 		}
 	}
 
-	// Check if there are orders above or below the current floor
-	for i := 0; i < config.NumFloors; i++ {
-		if queue[i][config.ButtonUp] || queue[i][config.ButtonDown] || queue[i][config.ButtonCab] {
-			if i > config.ElevatorInstance.Floor {
-				config.ElevatorInstance.State = config.Moving
-				config.ElevatorInstance.Direction = elevio.MD_Up
-				elevio.SetMotorDirection(elevio.MD_Up)
-				break
-			} else if i < config.ElevatorInstance.Floor {
-				config.ElevatorInstance.State = config.Moving
-				config.ElevatorInstance.Direction = elevio.MD_Down
-				elevio.SetMotorDirection(elevio.MD_Down)
-				break
-			}
-
-		}
-	}
+	return elevio.MD_Stop
 
 }
 
-func reachedFloor() bool {
-	queue := <-config.MyQueue
-	for i := 0; i < config.NumButtons; i++ {
-		if queue[elevio.GetFloor()][i] {
+func isOrderAbove(elevatorInstance chan config.Elevator, myQueue chan [][3]bool) bool {
+	elevator := <-elevatorInstance
+	queue := <-myQueue
+	for i := elevator.Floor + 1; i < config.NumFloors; i++ {
+		if queue[i][config.ButtonCab] {
 			return true
 		}
 	}
 	return false
 }
 
-func openDoor() {
-	elevio.SetMotorDirection(elevio.MD_Stop)
-	config.ElevatorInstance.Direction = elevio.MD_Stop
-	elevio.SetDoorOpenLamp(true)
-	config.ElevatorInstance.State = config.DoorOpen
-	time1 := time.Now()
-	for {
-		if time.Since(time1) > 3*time.Second {
-			break
+func isOrderBelow(elevatorInstance chan config.Elevator, myQueue chan [][3]bool) bool {
+	elevator := <-elevatorInstance
+	queue := <-myQueue
+	for i := elevator.Floor - 1; i >= 0; i-- {
+		if queue[i][config.ButtonCab] {
+			return true
 		}
 	}
-	elevio.SetDoorOpenLamp(false)
-	config.ElevatorInstance.State = config.Idle
-	decideDir()
+	return false
 }
 
-func UpdateQueue(floor, button int, state config.OrderState, elev *config.Elevator) {
-	config.ElevatorInstance.Queue[floor][elevio.ButtonType(button)] = state
-	if state == config.Confirmed {
-		elevio.SetButtonLamp(elevio.ButtonType(button), floor, true)
-	} else if state == config.NoOrder {
-		elevio.SetButtonLamp(elevio.ButtonType(button), floor, false)
+func reachedFloor(elevatorInstance chan config.Elevator, myQueue chan [][3]bool) bool {
+	elevator := <-elevatorInstance
+	queue := <-myQueue
+	for i := 0; i < config.NumButtons; i++ {
+		if queue[elevator.Floor][i] {
+			return true
+		}
 	}
-	hra.HRA()
+	return false
 }
