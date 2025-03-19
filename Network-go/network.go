@@ -12,6 +12,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"runtime"
 	"time"
 )
 
@@ -209,14 +210,20 @@ func SelfCheck() bool {
 // Restarter heisprosessen, men begrenser hvor ofte det kan skje
 func RestartSelf() {
 	if time.Since(LastRestartTime) < 30*time.Second { // Hindrer for mange restarter
-		fmt.Println("For tidlig restartforsøk! Venter litt...")
+		fmt.Println("Too many restarts. Waiting...")
 		return
 	}
 
 	fmt.Println("Restarting elevator process...")
 
-	// Start en ny instans av heisprosessen
-	cmd := exec.Command("gnome-terminal", "--", "go", "run", "main.go", "-id="+config.ElevatorInstance.ID)
+	var cmd *exec.Cmd
+
+	if runtime.GOOS == "windows" {
+		cmd = exec.Command("cmd.exe", "/C", "start", "cmd.exe", "/K", "go run main.go -id="+config.ElevatorInstance.ID)
+	} else {
+		cmd = exec.Command("gnome-terminal", "--", "go", "run", "main.go", "-id="+config.ElevatorInstance.ID)
+	}
+
 	err := cmd.Start()
 	if err != nil {
 		fmt.Println("Failed to restart elevator:", err)
