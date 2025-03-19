@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+//TODO: Decide direction only decides what direction it should go next, but do not set the motordirection.
+
 func removeOrder(floor, button int) {
 	config.ElevatorInstance.Queue[floor][button] = config.NoOrder
 	elevio.SetButtonLamp(elevio.ButtonType(button), floor, false)
@@ -42,6 +44,10 @@ func decideDir() {
 
 	}
 
+	// if reachedFloor() {
+
+	// }
+
 	if isOrderAbove() {
 		config.ElevatorInstance.State = config.Moving
 		config.ElevatorInstance.Direction = elevio.MD_Up
@@ -54,7 +60,6 @@ func decideDir() {
 		elevio.SetMotorDirection(elevio.MD_Down)
 		return
 	}
-	
 
 }
 
@@ -96,6 +101,8 @@ func openDoor(floor, i int) {
 	elevio.SetMotorDirection(elevio.MD_Stop)
 	elevio.SetDoorOpenLamp(true)
 	config.ElevatorInstance.State = config.DoorOpen
+	removeOrder(floor, int(config.ButtonCab))
+	removeOrder(floor, int(config.ElevatorInstance.Direction))
 	time1 := time.Now()
 	for {
 		if time.Since(time1) > 3*time.Second {
@@ -104,6 +111,5 @@ func openDoor(floor, i int) {
 	}
 	elevio.SetDoorOpenLamp(false)
 	config.ElevatorInstance.State = config.Idle
-	removeOrder(floor, i)
 	decideDir()
 }
