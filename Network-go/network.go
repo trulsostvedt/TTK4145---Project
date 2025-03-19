@@ -2,13 +2,16 @@ package network
 
 import (
 	"TTK4145---project/Network-go/network/bcast"
+	"TTK4145---project/Network-go/network/conn"
 	"TTK4145---project/Network-go/network/localip"
 	"TTK4145---project/Network-go/network/peers"
 	"TTK4145---project/config"
 	hra "TTK4145---project/cost_fns"
 	"TTK4145---project/driver-go/elevio"
 	"fmt"
+	"net"
 	"os"
+	"os/exec"
 	"time"
 )
 
@@ -141,4 +144,85 @@ func SyncHallRequests() {
 		}
 	}
 
+}
+
+type PeerUpdate struct {
+	Peers []string
+	New   string
+	Lost  []string
+}
+
+var (
+	interval         = 2 * time.Second
+	LastNetworkCheck = time.Now()
+	LastPeerMessage  = time.Now()
+	LastRestartTime  = time.Now() // Hindrer for hyppige restarter
+)
+
+// Mottar meldinger fra andre heiser og oppdaterer siste mottakstidspunkt
+func Receiver(port int, peerUpdateCh chan<- PeerUpdate) {
+	var buf [1024]byte
+	conn := conn.DialBroadcastUDP(port)
+	if conn == nil {
+		fmt.Println("Kunne ikke opprette UDP-forbindelse!")
+		return
+	}
+
+	for {
+		conn.SetReadDeadline(time.Now().Add(interval))
+		n, _, err := conn.ReadFrom(buf[0:])
+		if err == nil && n > 0 {
+			LastPeerMessage = time.Now() // Oppdater tid for siste mottatte melding
+		}
+	}
+}
+
+// Sjekker om nettverket fungerer
+func CheckNetworkStatus() bool {
+	// Hvis vi har fått en melding fra en annen heis de siste 10 sekundene, antar vi at vi har nettverk.
+	if time.Since(LastPeerMessage) < 10*time.Second {
+		return true
+	}
+
+	// Hvis det har gått mer enn 10 sekunder siden forrige DNS-sjekk, gjør en ny sjekk.
+	if time.Since(LastNetworkCheck) >= 10*time.Second {
+		conn, err := net.Dial("udp", "8.8.8.8:80") // Google DNS som nettverkstest
+		if err != nil {
+			return false // Nettverket er nede
+		}
+		conn.Close()
+		LastNetworkCheck = time.Now() // Kun oppdater hvis sjekken var vellykket
+	}
+
+	return true
+}
+
+// Sjekker om heisen bør restarte seg selv
+func SelfCheck() bool {
+	if !CheckNetworkStatus() {
+		fmt.Println("Nettverksfeil! Venter på gjenoppretting...")
+		return false // Nettverket er nede
+	}
+	return true // Alt fungerer
+}
+
+// Restarter heisprosessen, men begrenser hvor ofte det kan skje
+func RestartSelf() {
+	if time.Since(LastRestartTime) < 30*time.Second { // Hindrer for mange restarter
+		fmt.Println("For tidlig restartforsøk! Venter litt...")
+		return
+	}
+
+	fmt.Println("Restarting elevator process...")
+
+	// Start en ny instans av heisprosessen
+	cmd := exec.Command("gnome-terminal", "--", "go", "run", "main.go", "-id="+config.ElevatorInstance.ID)
+	err := cmd.Start()
+	if err != nil {
+		fmt.Println("Failed to restart elevator:", err)
+	} else {
+		fmt.Println("Elevator restarted successfully.")
+		LastRestartTime = time.Now()
+		os.Exit(1) // Avslutter den gamle prosessen
+	}
 }
