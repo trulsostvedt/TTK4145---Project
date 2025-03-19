@@ -5,7 +5,6 @@ import (
 	"TTK4145---project/Network-go/network/localip"
 	"TTK4145---project/Network-go/network/peers"
 	"TTK4145---project/config"
-	"TTK4145---project/driver-go"
 	"TTK4145---project/driver-go/elevio"
 	"fmt"
 	"os"
@@ -57,7 +56,7 @@ func Network(elevatorInstance *config.Elevator) {
 	go func() {
 		for {
 			elevatorTx <- *elevatorInstance
-			time.Sleep(20 * time.Millisecond)
+			time.Sleep(1 * time.Second)
 		}
 	}()
 
@@ -105,7 +104,7 @@ func SyncHallRequests() {
 			}
 		}
 		if isConfirmedUp {
-			driver.UpdateQueue(i, int(config.ButtonUp), config.Confirmed, &config.ElevatorInstance)
+			config.ElevatorInstance.Queue[i][config.ButtonUp] = config.Confirmed
 			elevio.SetButtonLamp(elevio.BT_HallUp, i, true)
 		}
 
@@ -118,7 +117,7 @@ func SyncHallRequests() {
 		}
 		if isConfirmedDown {
 
-			driver.UpdateQueue(i, int(config.ButtonDown), config.Confirmed, &config.ElevatorInstance)
+			config.ElevatorInstance.Queue[i][config.ButtonDown] = config.Confirmed
 			elevio.SetButtonLamp(elevio.BT_HallDown, i, true)
 		}
 	}
@@ -130,11 +129,11 @@ func SyncHallRequests() {
 			down := elev.Queue[i][config.ButtonDown] - config.ElevatorInstance.Queue[i][config.ButtonDown]
 
 			if up == 1 || up == -2 {
-				driver.UpdateQueue(i, int(config.ButtonUp), elev.Queue[i][config.ButtonUp], &config.ElevatorInstance)
+				config.ElevatorInstance.Queue[i][config.ButtonUp] = elev.Queue[i][config.ButtonUp]
 			}
 
 			if down == 1 || down == -2 {
-				driver.UpdateQueue(i, int(config.ButtonDown), elev.Queue[i][config.ButtonDown], &config.ElevatorInstance)
+				config.ElevatorInstance.Queue[i][config.ButtonDown] = elev.Queue[i][config.ButtonDown]
 			}
 		}
 	}

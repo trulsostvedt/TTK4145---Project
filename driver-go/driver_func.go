@@ -2,13 +2,13 @@ package driver
 
 import (
 	"TTK4145---project/config"
-	hra "TTK4145---project/cost_fns"
+	
 	"TTK4145---project/driver-go/elevio"
 	"time"
 )
 
 func removeOrder(floor, button int) {
-	UpdateQueue(floor, button, config.NoOrder, &config.ElevatorInstance)
+	config.ElevatorInstance.Queue[floor][elevio.ButtonType(button)] = config.NoOrder
 	elevio.SetButtonLamp(elevio.ButtonType(button), floor, false)
 }
 
@@ -84,14 +84,4 @@ func openDoor() {
 	elevio.SetDoorOpenLamp(false)
 	config.ElevatorInstance.State = config.Idle
 	decideDir()
-}
-
-func UpdateQueue(floor, button int, state config.OrderState, elev *config.Elevator) {
-	config.ElevatorInstance.Queue[floor][elevio.ButtonType(button)] = state
-	if state == config.Confirmed {
-		elevio.SetButtonLamp(elevio.ButtonType(button), floor, true)
-	} else if state == config.NoOrder {
-		elevio.SetButtonLamp(elevio.ButtonType(button), floor, false)
-	}
-	hra.HRA()
 }
