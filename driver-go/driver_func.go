@@ -42,23 +42,19 @@ func decideDir() {
 
 	}
 
-	// Check if there are orders above or below the current floor
-	for i := 0; i < config.NumFloors; i++ {
-		if queue[i][config.ButtonUp] || queue[i][config.ButtonDown] || queue[i][config.ButtonCab] {
-			if i > config.ElevatorInstance.Floor {
-				config.ElevatorInstance.State = config.Moving
-				config.ElevatorInstance.Direction = elevio.MD_Up
-				elevio.SetMotorDirection(elevio.MD_Up)
-				break
-			} else if i < config.ElevatorInstance.Floor {
-				config.ElevatorInstance.State = config.Moving
-				config.ElevatorInstance.Direction = elevio.MD_Down
-				elevio.SetMotorDirection(elevio.MD_Down)
-				break
-			}
-
-		}
+	if isOrderAbove() {
+		config.ElevatorInstance.State = config.Moving
+		config.ElevatorInstance.Direction = elevio.MD_Up
+		elevio.SetMotorDirection(elevio.MD_Up)
+		return
 	}
+	if isOrderBelow() {
+		config.ElevatorInstance.State = config.Moving
+		config.ElevatorInstance.Direction = elevio.MD_Down
+		elevio.SetMotorDirection(elevio.MD_Down)
+		return
+	}
+	
 
 }
 
@@ -72,9 +68,32 @@ func reachedFloor() bool {
 	return false
 }
 
+func isOrderAbove() bool {
+	queue := <-config.MyQueue
+	for i := config.ElevatorInstance.Floor + 1; i < config.NumFloors; i++ {
+		for j := 0; j < config.NumButtons; j++ {
+			if queue[i][j] {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func isOrderBelow() bool {
+	queue := <-config.MyQueue
+	for i := 0; i < config.ElevatorInstance.Floor; i++ {
+		for j := 0; j < config.NumButtons; j++ {
+			if queue[i][j] {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func openDoor(floor, i int) {
 	elevio.SetMotorDirection(elevio.MD_Stop)
-	config.ElevatorInstance.Direction = elevio.MD_Stop
 	elevio.SetDoorOpenLamp(true)
 	config.ElevatorInstance.State = config.DoorOpen
 	time1 := time.Now()

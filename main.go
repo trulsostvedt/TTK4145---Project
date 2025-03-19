@@ -21,12 +21,19 @@ func init() {
 	flag.StringVar(&config.Port, "port", "15657", "port to listen on")
 	flag.Parse()
 
+	queue := [config.NumFloors][config.NumButtons]config.OrderState{}
+	for i := 0; i < config.NumFloors; i++ {
+		for j := 0; j < config.NumButtons; j++ {
+			queue[i][j] = config.Uninitialized
+		}
+	}
+
 	config.ElevatorInstance = config.Elevator{
 		ID:        config.ElevatorInstance.ID,
 		State:     config.Idle,
 		Direction: elevio.MD_Stop,
 		Floor:     0,
-		Queue:     [config.NumFloors][config.NumButtons]config.OrderState{},
+		Queue:     queue,
 	}
 
 	config.Elevators = make(map[string]config.Elevator)

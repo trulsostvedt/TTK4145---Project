@@ -96,6 +96,19 @@ func Network(elevatorInstance *config.Elevator) {
 }
 
 func SyncHallRequests() {
+	// if this elevator has uninitialized requests, copy the other elevators' requests
+	for i := 0; i < config.NumFloors; i++ {
+		if config.ElevatorInstance.Queue[i][config.ButtonUp] == config.Uninitialized {
+			for _, elev := range config.Elevators {
+				config.ElevatorInstance.Queue[i][config.ButtonUp] = elev.Queue[i][config.ButtonUp]
+			}
+		}
+		if config.ElevatorInstance.Queue[i][config.ButtonDown] == config.Uninitialized {
+			for _, elev := range config.Elevators {
+				config.ElevatorInstance.Queue[i][config.ButtonDown] = elev.Queue[i][config.ButtonDown]
+			}
+		}
+	}
 
 	// if all elevators have the same unconfirmed request, make the request confirmed
 	for i := 0; i < config.NumFloors; i++ {
