@@ -35,6 +35,7 @@ func init() {
 		Floor:     0,
 		Queue:     queue,
 	}
+	driver.ReadCabOrders()
 
 	config.Elevators = make(map[string]config.Elevator)
 	config.Elevators[config.ElevatorInstance.ID] = config.ElevatorInstance

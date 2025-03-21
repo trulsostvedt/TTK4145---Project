@@ -121,10 +121,10 @@ func HRA() {
 		return
 	}
 
-	fmt.Printf("output: \n")
-	for k, v := range *output {
-		fmt.Printf("%6v :  %+v\n", k, v)
-	}
+	// fmt.Printf("output: \n")
+	// for k, v := range *output {
+	// 	fmt.Printf("%6v :  %+v\n", k, v)
+	// }
 
 	config.MyQueue <- (*output)[config.ElevatorInstance.ID]
 

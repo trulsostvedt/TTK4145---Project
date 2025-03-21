@@ -6,7 +6,9 @@ import (
 	"TTK4145---project/Network-go/network/peers"
 	"TTK4145---project/config"
 	hra "TTK4145---project/cost_fns"
-	"TTK4145---project/driver-go/elevio"
+
+	// "TTK4145---project/driver-go"
+
 	"fmt"
 	"os"
 	"time"
@@ -75,7 +77,7 @@ func Network(elevatorInstance *config.Elevator) {
 			}
 
 		case a := <-elevatorRx:
-			fmt.Printf("Received: %#v\n", a)
+			// fmt.Printf("Received: %#v\n", a)
 
 			elev := config.Elevator{
 				ID:        a.ID,
@@ -96,8 +98,9 @@ func Network(elevatorInstance *config.Elevator) {
 }
 
 func SyncHallRequests() {
-	// if this elevator has uninitialized requests, copy the other elevators' requests
+
 	for i := 0; i < config.NumFloors; i++ {
+		// if this elevator has uninitialized requests, copy the other elevators' requests
 		if config.ElevatorInstance.Queue[i][config.ButtonUp] == config.Uninitialized {
 			for _, elev := range config.Elevators {
 				config.ElevatorInstance.Queue[i][config.ButtonUp] = elev.Queue[i][config.ButtonUp]
@@ -108,10 +111,8 @@ func SyncHallRequests() {
 				config.ElevatorInstance.Queue[i][config.ButtonDown] = elev.Queue[i][config.ButtonDown]
 			}
 		}
-	}
 
-	// if all elevators have the same unconfirmed request, make the request confirmed
-	for i := 0; i < config.NumFloors; i++ {
+		// if all elevators have the same unconfirmed request, make the request confirmed
 		isConfirmedUp := true
 		for _, elev := range config.Elevators {
 			if elev.Queue[i][config.ButtonUp] != config.Unconfirmed {
@@ -121,7 +122,6 @@ func SyncHallRequests() {
 		}
 		if isConfirmedUp {
 			config.ElevatorInstance.Queue[i][config.ButtonUp] = config.Confirmed
-			elevio.SetButtonLamp(elevio.BT_HallUp, i, true)
 		}
 
 		isConfirmedDown := true
@@ -134,7 +134,6 @@ func SyncHallRequests() {
 		if isConfirmedDown {
 
 			config.ElevatorInstance.Queue[i][config.ButtonDown] = config.Confirmed
-			elevio.SetButtonLamp(elevio.BT_HallDown, i, true)
 		}
 	}
 

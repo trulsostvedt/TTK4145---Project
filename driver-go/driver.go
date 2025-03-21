@@ -26,13 +26,16 @@ func RunElevator() {
 	go elevio.PollObstructionSwitch(drv_obstr)
 	go elevio.PollStopButton(drv_stop)
 
+	decideDir()
+
 	for {
+		setAllLights()
 		select {
 		case a := <-drv_buttons:
 			fmt.Printf("%+v\n", a)
 			if a.Button == elevio.BT_Cab {
 				config.ElevatorInstance.Queue[a.Floor][a.Button] = config.Confirmed
-				elevio.SetButtonLamp(a.Button, a.Floor, true)
+				saveCabOrders()
 			} else {
 				config.ElevatorInstance.Queue[a.Floor][a.Button] = config.Unconfirmed
 			}
