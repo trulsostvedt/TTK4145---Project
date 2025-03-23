@@ -2,7 +2,6 @@ package driver
 
 import (
 	"TTK4145---project/config"
-	hra "TTK4145---project/cost_fns"
 	"TTK4145---project/driver-go/elevio"
 	"fmt"
 	"os"
