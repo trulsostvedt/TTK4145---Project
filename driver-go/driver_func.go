@@ -24,116 +24,77 @@ func removeOrders(floor int) {
 	removeOrder(floor, int(config.ButtonCab))
 }
 
-// func decideDir() {
+func decideDir() {
 
-// 	if config.ElevatorInstance.Floor == 0 && config.ElevatorInstance.Direction == elevio.MD_Down {
-// 		config.ElevatorInstance.Direction = elevio.MD_Stop
-// 		elevio.SetMotorDirection(elevio.MD_Stop)
-// 		return
-// 	}
-// 	if config.ElevatorInstance.Floor == config.NumFloors-1 && config.ElevatorInstance.Direction == elevio.MD_Up {
-// 		config.ElevatorInstance.Direction = elevio.MD_Stop
-// 		elevio.SetMotorDirection(elevio.MD_Stop)
-// 		return
-// 	}
-
-// 	if config.ElevatorInstance.State == config.DoorOpen {
-// 		elevio.SetMotorDirection(elevio.MD_Stop)
-// 		return
-// 	}
-
-// 	queue := <-config.MyQueue
-
-// 	// Check if there is an order at the current floor and stop
-// 	for i := 0; i < config.NumButtons; i++ {
-// 		if queue[config.ElevatorInstance.Floor][i] {
-
-// 			elevio.SetMotorDirection(elevio.MD_Stop)
-// 			go openDoor(config.ElevatorInstance.Floor)
-// 			break
-// 		}
-
-// 	}
-
-// 	// if reachedFloor() {
-
-// 	// }
-
-// 	if isOrderAbove() {
-// 		config.ElevatorInstance.State = config.Moving
-// 		config.ElevatorInstance.Direction = elevio.MD_Up
-// 		elevio.SetMotorDirection(elevio.MD_Up)
-// 		return
-// 	}
-// 	if isOrderBelow() {
-// 		config.ElevatorInstance.State = config.Moving
-// 		config.ElevatorInstance.Direction = elevio.MD_Down
-// 		elevio.SetMotorDirection(elevio.MD_Down)
-// 		return
-// 	}
-
-// }
-
-func decideDir() elevio.MotorDirection {
-	if isOrderAbove() {
-		config.ElevatorInstance.Direction = elevio.MD_Up
-		return elevio.MD_Up
-	} else if isOrderBelow() {
-		config.ElevatorInstance.Direction = elevio.MD_Down
-		return elevio.MD_Down
+	if config.ElevatorInstance.Floor == 0 && config.ElevatorInstance.Direction == elevio.MD_Down {
+		config.ElevatorInstance.Direction = elevio.MD_Stop
+		elevio.SetMotorDirection(elevio.MD_Stop)
+		return
 	}
-	config.ElevatorInstance.Direction = elevio.MD_Stop
-	return elevio.MD_Stop
+	if config.ElevatorInstance.Floor == config.NumFloors-1 && config.ElevatorInstance.Direction == elevio.MD_Up {
+		config.ElevatorInstance.Direction = elevio.MD_Stop
+		elevio.SetMotorDirection(elevio.MD_Stop)
+		return
+	}
 
-}
-func setDir(direction elevio.MotorDirection) {
-	fmt.Println("Setting direction to", direction)
+	if config.ElevatorInstance.State == config.DoorOpen {
+		elevio.SetMotorDirection(elevio.MD_Stop)
+		return
+	}
 
-	// Stop if there is an order at the current floor
+	// // Check if there is an order at the current floor and stop
+	// for i := 0; i < config.NumButtons; i++ {
+	// 	if queue[config.ElevatorInstance.Floor][i] {
+
+	// 		elevio.SetMotorDirection(elevio.MD_Stop)
+	// 		go openDoor(config.ElevatorInstance.Floor)
+	// 		break
+	// 	}
+
+	// }
+
+	// if isOrderAbove() {
+	// 	config.ElevatorInstance.State = config.Moving
+	// 	config.ElevatorInstance.Direction = elevio.MD_Up
+	// 	elevio.SetMotorDirection(elevio.MD_Up)
+	// 	return
+	// }
+	// if isOrderBelow() {
+	// 	config.ElevatorInstance.State = config.Moving
+	// 	config.ElevatorInstance.Direction = elevio.MD_Down
+	// 	elevio.SetMotorDirection(elevio.MD_Down)
+	// 	return
+	// }
+
+	// this is new
+	var direction elevio.MotorDirection
+	if isOrderAbove() {
+		direction = elevio.MD_Up
+		config.ElevatorInstance.Direction = direction
+	} else if isOrderBelow() {
+		direction = elevio.MD_Down
+		config.ElevatorInstance.Direction = direction
+	} else {
+		direction = elevio.MD_Stop
+		config.ElevatorInstance.Direction = direction
+	}
+
 	if reachedFloor() {
 		elevio.SetMotorDirection(elevio.MD_Stop)
 		go openDoor(config.ElevatorInstance.Floor)
 		return
 	}
 
-	// Stop at the top floor if moving up
-	if config.ElevatorInstance.Direction == elevio.MD_Up && config.ElevatorInstance.Floor == config.NumFloors-1 {
-		elevio.SetMotorDirection(elevio.MD_Stop)
-		config.ElevatorInstance.Direction = elevio.MD_Stop
-		config.ElevatorInstance.State = config.Idle
+	if direction != elevio.MD_Stop {
+		config.ElevatorInstance.State = config.Moving
+		elevio.SetMotorDirection(direction)
 		return
 	}
+	elevio.SetMotorDirection(elevio.MD_Stop)
+	config.ElevatorInstance.State = config.Idle
 
-	// Stop at the bottom floor if moving down
-	if config.ElevatorInstance.Direction == elevio.MD_Down && config.ElevatorInstance.Floor == 0 {
-		elevio.SetMotorDirection(elevio.MD_Stop)
-		config.ElevatorInstance.Direction = elevio.MD_Stop
-		config.ElevatorInstance.State = config.Idle
-		return
-	}
-
-	// Prevent movement if the door is open
-	if config.ElevatorInstance.State == config.DoorOpen {
-		elevio.SetMotorDirection(elevio.MD_Stop)
-		return
-	}
-
-	// Stop if no direction is specified
-	if direction == elevio.MD_Stop {
-		elevio.SetMotorDirection(elevio.MD_Stop)
-		config.ElevatorInstance.State = config.Idle
-		return
-	}
-
-	// If already moving, do nothing
-	if config.ElevatorInstance.State == config.Moving {
-		return
-	}
-
-	// Start moving in the specified direction
-	config.ElevatorInstance.State = config.Moving
-	elevio.SetMotorDirection(direction)
 }
+
 func reachedFloor() bool {
 	queue := <-config.MyQueue
 	for i := 0; i < config.NumButtons; i++ {
