@@ -21,8 +21,12 @@ func removeOrders(floor int) {
 	} else if config.ElevatorInstance.Direction == elevio.MD_Down {
 		removeOrder(floor, int(config.ButtonDown))
 	} else if config.ElevatorInstance.Direction == elevio.MD_Stop {
-		removeOrder(floor, int(config.ButtonUp))
-		removeOrder(floor, int(config.ButtonDown))
+		queue := <-config.MyQueue
+		if queue[floor][int(config.ButtonUp)] {
+			removeOrder(floor, int(config.ButtonUp))
+		} else if queue[floor][int(config.ButtonDown)] {
+			removeOrder(floor, int(config.ButtonDown))
+		}
 	}
 	removeOrder(floor, int(config.ButtonCab))
 }
