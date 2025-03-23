@@ -88,7 +88,7 @@ func decideDir() {
 
 	if reachedFloor() {
 		elevio.SetMotorDirection(elevio.MD_Stop)
-		go openDoor(config.ElevatorInstance.Floor)
+		go openDoor(config.ElevatorInstance.Floor, int(direction))
 		return
 	}
 
@@ -100,6 +100,15 @@ func decideDir() {
 	elevio.SetMotorDirection(elevio.MD_Stop)
 	config.ElevatorInstance.State = config.Idle
 
+}
+
+func mapButtonToDirection(button int) elevio.MotorDirection {
+	if button == int(config.ButtonUp) {
+		return elevio.MD_Up
+	} else if button == int(config.ButtonDown) {
+		return elevio.MD_Down
+	}
+	return elevio.MD_Stop
 }
 
 func reachedFloor() bool {
@@ -136,9 +145,13 @@ func isOrderBelow() bool {
 	return false
 }
 
-func openDoor(floor int) {
+// TODO: Doesnt work when both up and down and then going up
+
+func openDoor(floor, button int) {
+	if config.ElevatorInstance.Direction != mapButtonToDirection(button) && config.ElevatorInstance.Direction != elevio.MD_Stop {
+		return
+	}
 	elevio.SetMotorDirection(elevio.MD_Stop)
-	elevio.SetDoorOpenLamp(true)
 	fmt.Println("Door open in floor", floor)
 	config.ElevatorInstance.State = config.DoorOpen
 	removeOrders(floor)
@@ -149,8 +162,11 @@ func openDoor(floor int) {
 			break
 		}
 	}
-	elevio.SetDoorOpenLamp(false)
 	fmt.Println("Door closing in floor", floor)
+	if obstruction {
+		go openDoor(floor, button)
+		return
+	}
 	config.ElevatorInstance.State = config.Idle
 	decideDir()
 }
@@ -208,5 +224,13 @@ func setAllLights() {
 				elevio.SetButtonLamp(elevio.ButtonType(j), i, false)
 			}
 		}
+	}
+	// set floor indicator
+	elevio.SetFloorIndicator(config.ElevatorInstance.Floor)
+	// set door open lamp
+	if config.ElevatorInstance.State == config.DoorOpen {
+		elevio.SetDoorOpenLamp(true)
+	} else {
+		elevio.SetDoorOpenLamp(false)
 	}
 }

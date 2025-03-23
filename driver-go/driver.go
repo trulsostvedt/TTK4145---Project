@@ -6,6 +6,8 @@ import (
 	"fmt"
 )
 
+var obstruction = false
+
 func RunElevator() {
 
 	numFloors := config.NumFloors
@@ -14,7 +16,7 @@ func RunElevator() {
 
 	var d elevio.MotorDirection = elevio.MD_Stop
 
-	//elevio.SetMotorDirection(d)
+	elevio.SetMotorDirection(d)
 
 	drv_buttons := make(chan elevio.ButtonEvent)
 	drv_floors := make(chan int)
@@ -35,30 +37,31 @@ func RunElevator() {
 		// direction = decideDir()
 		// setDir(direction)
 		select {
-		case a := <-drv_buttons:
-			fmt.Printf("%+v\n", a)
-			if a.Button == elevio.BT_Cab {
-				config.ElevatorInstance.Queue[a.Floor][a.Button] = config.Confirmed
+		case order := <-drv_buttons:
+			fmt.Printf("%+v\n", order)
+			if order.Button == elevio.BT_Cab {
+				config.ElevatorInstance.Queue[order.Floor][order.Button] = config.Confirmed
 				saveCabOrders()
 			} else {
-				config.ElevatorInstance.Queue[a.Floor][a.Button] = config.Unconfirmed
+				config.ElevatorInstance.Queue[order.Floor][order.Button] = config.Unconfirmed
 			}
 			decideDir()
 
-		case a := <-drv_floors:
-			config.ElevatorInstance.Floor = a
-			fmt.Printf("%+v\n", a)
+		case floor := <-drv_floors:
+			config.ElevatorInstance.Floor = floor
+			fmt.Printf("%+v\n", floor)
 			decideDir()
 
-		case a := <-drv_obstr:
-			fmt.Printf("%+v\n", a)
-			if a {
-				elevio.SetMotorDirection(elevio.MD_Stop)
-				config.ElevatorInstance.Direction = elevio.MD_Stop
-			} else {
-				elevio.SetMotorDirection(d)
-				config.ElevatorInstance.Direction = d
-			}
+		case obstr := <-drv_obstr:
+			// fmt.Printf("%+v\n", a)
+			// if a {
+			// 	elevio.SetMotorDirection(elevio.MD_Stop)
+			// 	config.ElevatorInstance.Direction = elevio.MD_Stop
+			// } else {
+			// 	elevio.SetMotorDirection(d)
+			// 	config.ElevatorInstance.Direction = d
+			// }
+			obstruction = obstr
 
 		case a := <-drv_stop:
 			fmt.Printf("%+v\n", a)
