@@ -65,7 +65,7 @@ func CheckNetworkStatus() bool {
 // RestartSelf restarts the elevator process.
 // It waits 30 seconds between each restart to prevent infinite restart loops.
 func RestartSelf() {
-	if time.Since(LastRestartTime) < 30*time.Second {
+	if time.Since(LastRestartTime) < 5*time.Second {
 		fmt.Println("Too many restarts. Waiting...")
 		return
 	}
