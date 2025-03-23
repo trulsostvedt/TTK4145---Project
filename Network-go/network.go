@@ -7,14 +7,12 @@ import (
 	"TTK4145---project/Network-go/network/peers"
 	"TTK4145---project/config"
 	hra "TTK4145---project/cost_fns"
+	faulttolerance "TTK4145---project/faultTolerance-go"
 
 	// "TTK4145---project/driver-go"
 
 	"fmt"
-	"net"
 	"os"
-	"os/exec"
-	"runtime"
 	"time"
 )
 
@@ -101,6 +99,7 @@ func Network(elevatorInstance *config.Elevator) {
 	}
 }
 
+// SyncHallRequests synchronizes the hall requests between all elevators
 func SyncHallRequests() {
 
 	for i := 0; i < config.NumFloors; i++ {
@@ -165,14 +164,8 @@ type PeerUpdate struct {
 	Lost  []string
 }
 
-var (
-	interval         = 2 * time.Second
-	LastNetworkCheck = time.Now()
-	LastPeerMessage  = time.Now()
-	LastRestartTime  = time.Now() // Hindrer for hyppige restarter
-)
-
-// Mottar meldinger fra andre heiser og oppdaterer siste mottakstidspunkt
+// Receiver listens for incoming messages on the given port, and sends them to the
+// provided channel.
 func Receiver(port int, peerUpdateCh chan<- PeerUpdate) {
 	var buf [1024]byte
 	conn := conn.DialBroadcastUDP(port)
@@ -182,66 +175,10 @@ func Receiver(port int, peerUpdateCh chan<- PeerUpdate) {
 	}
 
 	for {
-		conn.SetReadDeadline(time.Now().Add(interval))
+		conn.SetReadDeadline(time.Now().Add(faulttolerance.Interval))
 		n, _, err := conn.ReadFrom(buf[0:])
 		if err == nil && n > 0 {
-			LastPeerMessage = time.Now() // Oppdater tid for siste mottatte melding
+			faulttolerance.LastPeerMessage = time.Now() // Reset timer
 		}
-	}
-}
-
-// Sjekker om nettverket fungerer
-func CheckNetworkStatus() bool {
-	// Hvis vi har fått en melding fra en annen heis de siste 10 sekundene, antar vi at vi har nettverk.
-	if time.Since(LastPeerMessage) < 10*time.Second {
-		return true
-	}
-
-	// Hvis det har gått mer enn 10 sekunder siden forrige DNS-sjekk, gjør en ny sjekk.
-	if time.Since(LastNetworkCheck) >= 10*time.Second {
-		conn, err := net.Dial("udp", "8.8.8.8:80") // Google DNS som nettverkstest
-		if err != nil {
-			return false // Nettverket er nede
-		}
-		conn.Close()
-		LastNetworkCheck = time.Now() // Kun oppdater hvis sjekken var vellykket
-	}
-
-	return true
-}
-
-// Sjekker om heisen bør restarte seg selv
-func SelfCheck() bool {
-	if !CheckNetworkStatus() {
-		fmt.Println("Nettverksfeil! Venter på gjenoppretting...")
-		return false // Nettverket er nede
-	}
-	return true // Alt fungerer
-}
-
-// Restarter heisprosessen, men begrenser hvor ofte det kan skje
-func RestartSelf() {
-	if time.Since(LastRestartTime) < 30*time.Second { // Hindrer for mange restarter
-		fmt.Println("Too many restarts. Waiting...")
-		return
-	}
-
-	fmt.Println("Restarting elevator process...")
-
-	var cmd *exec.Cmd
-
-	if runtime.GOOS == "windows" {
-		cmd = exec.Command("cmd.exe", "/C", "start", "cmd.exe", "/K", "go run main.go -id="+config.ElevatorInstance.ID)
-	} else {
-		cmd = exec.Command("gnome-terminal", "--", "go", "run", "main.go", "-id="+config.ElevatorInstance.ID)
-	}
-
-	err := cmd.Start()
-	if err != nil {
-		fmt.Println("Failed to restart elevator:", err)
-	} else {
-		fmt.Println("Elevator restarted successfully.")
-		LastRestartTime = time.Now()
-		os.Exit(1) // Avslutter den gamle prosessen
 	}
 }
