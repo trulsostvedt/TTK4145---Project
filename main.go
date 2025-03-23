@@ -5,16 +5,16 @@ import (
 	config "TTK4145---project/config"
 	driver "TTK4145---project/driver-go"
 	elevio "TTK4145---project/driver-go/elevio"
+	faultTolerance "TTK4145---project/faultTolerance-go"
 	"flag"
-	"fmt"
-	"time"
 )
 
 func main() {
 
 	go network.Network(&config.ElevatorInstance)
 	go driver.RunElevator()
-	go monitorSelf() // Monitor the elevator's own state
+	go faultTolerance.MonitorMovement()
+	go faultTolerance.MonitorNetwork()
 	select {}
 }
 
@@ -43,23 +43,4 @@ func init() {
 	config.Elevators[config.ElevatorInstance.ID] = config.ElevatorInstance
 }
 
-func monitorSelf() {
-	for {
-		time.Sleep(2 * time.Second) // Sjekk status med lavere frekvens
 
-		// Vi antar at vi har nettverk hvis vi har hørt fra en annen heis nylig.
-		if time.Since(network.LastPeerMessage) < 10*time.Second {
-			continue // Vi har nettverk, ingen restart nødvendig
-		}
-
-		// Hvis vi ikke har hørt noe på 10 sekunder, sjekk DNS for sikkerhets skyld.
-		if !network.CheckNetworkStatus() {
-			fmt.Println("Network failure detected. Restarting self...")
-			time.Sleep(10 * time.Second)       // Gir tid til nettverket å komme tilbake
-			if !network.CheckNetworkStatus() { // Hvis nettverket fortsatt er nede, restart
-				fmt.Println("Restarting self due to detected network failure...")
-				network.RestartSelf()
-			}
-		}
-	}
-}
