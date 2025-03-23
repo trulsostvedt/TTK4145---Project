@@ -77,7 +77,7 @@ func Network(elevatorInstance *config.Elevator) {
 			}
 
 		case a := <-elevatorRx:
-			// fmt.Printf("Received: %#v\n", a)
+			fmt.Printf("Received: %#v\n", a)
 
 			elev := config.Elevator{
 				ID:        a.ID,

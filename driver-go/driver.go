@@ -26,10 +26,13 @@ func RunElevator() {
 	go elevio.PollObstructionSwitch(drv_obstr)
 	go elevio.PollStopButton(drv_stop)
 
-	decideDir()
+	direction := decideDir()
+	setDir(direction)
 
 	for {
 		setAllLights()
+		direction = decideDir()
+		setDir(direction)
 		select {
 		case a := <-drv_buttons:
 			fmt.Printf("%+v\n", a)
@@ -39,14 +42,12 @@ func RunElevator() {
 			} else {
 				config.ElevatorInstance.Queue[a.Floor][a.Button] = config.Unconfirmed
 			}
-
-			decideDir()
+			// decideDir()
 
 		case a := <-drv_floors:
 			config.ElevatorInstance.Floor = a
 			fmt.Printf("%+v\n", a)
-
-			decideDir()
+			// decideDir()
 
 		case a := <-drv_obstr:
 			fmt.Printf("%+v\n", a)
@@ -67,7 +68,9 @@ func RunElevator() {
 				}
 			}
 		case <-config.MyQueue:
-			decideDir()
+			direction = decideDir()
+			setDir(direction)
+			// decideDir()
 
 		}
 	}
