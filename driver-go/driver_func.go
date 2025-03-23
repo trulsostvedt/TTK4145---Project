@@ -99,16 +99,16 @@ func setDir(direction elevio.MotorDirection) {
 
 	// cant go up from top floor
 	if config.ElevatorInstance.Direction == elevio.MD_Up && config.ElevatorInstance.State == config.Moving && config.ElevatorInstance.Floor == config.NumFloors-1 {
+		elevio.SetMotorDirection(elevio.MD_Stop)
 		config.ElevatorInstance.Direction = elevio.MD_Down
 		config.ElevatorInstance.State = config.Idle
-		elevio.SetMotorDirection(elevio.MD_Stop)
 		return
 	}
 	// cant go down from bottom floor
 	if config.ElevatorInstance.Direction == elevio.MD_Down && config.ElevatorInstance.State == config.Moving && config.ElevatorInstance.Floor == 0 {
+		elevio.SetMotorDirection(elevio.MD_Stop)
 		config.ElevatorInstance.Direction = elevio.MD_Up
 		config.ElevatorInstance.State = config.Idle
-		elevio.SetMotorDirection(elevio.MD_Stop)
 		return
 	}
 	// cant move if door is open
