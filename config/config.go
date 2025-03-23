@@ -25,20 +25,13 @@ const (
 	ButtonCab
 )
 
-// type MotorDirection int
-
-// const (
-// 	MD_Down MotorDirection = iota - 1
-// 	MD_Stop
-// 	MD_Up
-// )
-
 type OrderState int
 
 const (
 	NoOrder OrderState = iota
 	Unconfirmed
 	Confirmed
+	Uninitialized = -1
 )
 
 type ElevatorState int

@@ -6,6 +6,8 @@ import (
 	"fmt"
 )
 
+var obstruction = false
+
 func RunElevator() {
 
 	numFloors := config.NumFloors
@@ -14,7 +16,7 @@ func RunElevator() {
 
 	var d elevio.MotorDirection = elevio.MD_Stop
 
-	//elevio.SetMotorDirection(d)
+	elevio.SetMotorDirection(d)
 
 	drv_buttons := make(chan elevio.ButtonEvent)
 	drv_floors := make(chan int)
@@ -26,43 +28,52 @@ func RunElevator() {
 	go elevio.PollObstructionSwitch(drv_obstr)
 	go elevio.PollStopButton(drv_stop)
 
+	// direction := decideDir()
+	// setDir(direction)
+	decideDir()
+
 	for {
+		setAllLights()
+		// direction = decideDir()
+		// setDir(direction)
 		select {
-		case a := <-drv_buttons:
-			fmt.Printf("%+v\n", a)
-			if a.Button == elevio.BT_Cab {
-				UpdateQueue(a.Floor, int(config.ButtonCab), config.Confirmed)
-				elevio.SetButtonLamp(a.Button, a.Floor, true)
+		case order := <-drv_buttons:
+			fmt.Printf("%+v\n", order)
+			if order.Button == elevio.BT_Cab {
+				config.ElevatorInstance.Queue[order.Floor][order.Button] = config.Confirmed
+				saveCabOrders()
 			} else {
-				UpdateQueue(a.Floor, int(a.Button), config.Confirmed)
+				config.ElevatorInstance.Queue[order.Floor][order.Button] = config.Unconfirmed
 			}
-
 			decideDir()
 
-		case a := <-drv_floors:
-			config.ElevatorInstance.Floor = a
-			fmt.Printf("%+v\n", a)
-
+		case floor := <-drv_floors:
+			config.ElevatorInstance.Floor = floor
+			fmt.Printf("%+v\n", floor)
 			decideDir()
 
-		case a := <-drv_obstr:
-			fmt.Printf("%+v\n", a)
-			if a {
-				elevio.SetMotorDirection(elevio.MD_Stop)
-				config.ElevatorInstance.Direction = elevio.MD_Stop
-			} else {
-				elevio.SetMotorDirection(d)
-				config.ElevatorInstance.Direction = d
-			}
+		case obstr := <-drv_obstr:
+			// fmt.Printf("%+v\n", a)
+			// if a {
+			// 	elevio.SetMotorDirection(elevio.MD_Stop)
+			// 	config.ElevatorInstance.Direction = elevio.MD_Stop
+			// } else {
+			// 	elevio.SetMotorDirection(d)
+			// 	config.ElevatorInstance.Direction = d
+			// }
+			obstruction = obstr
 
 		case a := <-drv_stop:
 			fmt.Printf("%+v\n", a)
 			for f := 0; f < numFloors; f++ {
 				for b := elevio.ButtonType(0); b < 3; b++ {
-					elevio.SetButtonLamp(b, f, false)
+					// elevio.SetButtonLamp(b, f, false)
+					continue
 				}
 			}
 		case <-config.MyQueue:
+			// direction = decideDir()
+			// setDir(direction)
 			decideDir()
 
 		}

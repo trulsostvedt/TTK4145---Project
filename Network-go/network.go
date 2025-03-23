@@ -5,8 +5,10 @@ import (
 	"TTK4145---project/Network-go/network/localip"
 	"TTK4145---project/Network-go/network/peers"
 	"TTK4145---project/config"
-	"TTK4145---project/driver-go"
-	"TTK4145---project/driver-go/elevio"
+	hra "TTK4145---project/cost_fns"
+
+	// "TTK4145---project/driver-go"
+
 	"fmt"
 	"os"
 	"time"
@@ -89,14 +91,28 @@ func Network(elevatorInstance *config.Elevator) {
 
 			SyncHallRequests()
 
+			hra.HRA()
+
 		}
 	}
 }
 
 func SyncHallRequests() {
 
-	// if all elevators have the same unconfirmed request, make the request confirmed
 	for i := 0; i < config.NumFloors; i++ {
+		// if this elevator has uninitialized requests, copy the other elevators' requests
+		if config.ElevatorInstance.Queue[i][config.ButtonUp] == config.Uninitialized {
+			for _, elev := range config.Elevators {
+				config.ElevatorInstance.Queue[i][config.ButtonUp] = elev.Queue[i][config.ButtonUp]
+			}
+		}
+		if config.ElevatorInstance.Queue[i][config.ButtonDown] == config.Uninitialized {
+			for _, elev := range config.Elevators {
+				config.ElevatorInstance.Queue[i][config.ButtonDown] = elev.Queue[i][config.ButtonDown]
+			}
+		}
+
+		// if all elevators have the same unconfirmed request, make the request confirmed
 		isConfirmedUp := true
 		for _, elev := range config.Elevators {
 			if elev.Queue[i][config.ButtonUp] != config.Unconfirmed {
@@ -105,8 +121,7 @@ func SyncHallRequests() {
 			}
 		}
 		if isConfirmedUp {
-			driver.UpdateQueue(i, int(config.ButtonUp), config.Confirmed)
-			elevio.SetButtonLamp(elevio.BT_HallUp, i, true)
+			config.ElevatorInstance.Queue[i][config.ButtonUp] = config.Confirmed
 		}
 
 		isConfirmedDown := true
@@ -118,8 +133,7 @@ func SyncHallRequests() {
 		}
 		if isConfirmedDown {
 
-			driver.UpdateQueue(i, int(config.ButtonDown), config.Confirmed)
-			elevio.SetButtonLamp(elevio.BT_HallDown, i, true)
+			config.ElevatorInstance.Queue[i][config.ButtonDown] = config.Confirmed
 		}
 	}
 
@@ -130,11 +144,11 @@ func SyncHallRequests() {
 			down := elev.Queue[i][config.ButtonDown] - config.ElevatorInstance.Queue[i][config.ButtonDown]
 
 			if up == 1 || up == -2 {
-				driver.UpdateQueue(i, int(config.ButtonUp), elev.Queue[i][config.ButtonUp])
+				config.ElevatorInstance.Queue[i][config.ButtonUp] = elev.Queue[i][config.ButtonUp]
 			}
 
 			if down == 1 || down == -2 {
-				driver.UpdateQueue(i, int(config.ButtonDown), elev.Queue[i][config.ButtonDown])
+				config.ElevatorInstance.Queue[i][config.ButtonDown] = elev.Queue[i][config.ButtonDown]
 			}
 		}
 	}

@@ -4,12 +4,32 @@ import (
 	"TTK4145---project/config"
 	hra "TTK4145---project/cost_fns"
 	"TTK4145---project/driver-go/elevio"
+	"fmt"
+	"os"
 	"time"
 )
 
+// TODO: Decide direction only decides what direction it should go next, but do not set the motordirection.
+// Cab orders are now saved and loaded from a file.
+// Still need to change logic in deciding direction and moving the elevator.
 func removeOrder(floor, button int) {
-	UpdateQueue(floor, button, config.NoOrder)
-	elevio.SetButtonLamp(elevio.ButtonType(button), floor, false)
+	config.ElevatorInstance.Queue[floor][button] = config.NoOrder
+
+}
+func removeOrders(floor int) {
+	if config.ElevatorInstance.Direction == elevio.MD_Up {
+		removeOrder(floor, int(config.ButtonUp))
+	} else if config.ElevatorInstance.Direction == elevio.MD_Down {
+		removeOrder(floor, int(config.ButtonDown))
+	} else if config.ElevatorInstance.Direction == elevio.MD_Stop {
+		queue := <-config.MyQueue
+		if queue[floor][int(config.ButtonUp)] {
+			removeOrder(floor, int(config.ButtonUp))
+		} else if queue[floor][int(config.ButtonDown)] {
+			removeOrder(floor, int(config.ButtonDown))
+		}
+	}
+	removeOrder(floor, int(config.ButtonCab))
 }
 
 func decideDir() {
@@ -30,66 +50,188 @@ func decideDir() {
 		return
 	}
 
-	queue := <-config.MyQueue
+	// // Check if there is an order at the current floor and stop
+	// for i := 0; i < config.NumButtons; i++ {
+	// 	if queue[config.ElevatorInstance.Floor][i] {
 
-	// Check if there is an order at the current floor and stop
-	for i := 0; i < config.NumButtons; i++ {
-		if queue[config.ElevatorInstance.Floor][i] {
-			removeOrder(config.ElevatorInstance.Floor, i)
-			elevio.SetMotorDirection(elevio.MD_Stop)
-			go openDoor()
-			break
-		}
+	// 		elevio.SetMotorDirection(elevio.MD_Stop)
+	// 		go openDoor(config.ElevatorInstance.Floor)
+	// 		break
+	// 	}
 
+	// }
+
+	// if isOrderAbove() {
+	// 	config.ElevatorInstance.State = config.Moving
+	// 	config.ElevatorInstance.Direction = elevio.MD_Up
+	// 	elevio.SetMotorDirection(elevio.MD_Up)
+	// 	return
+	// }
+	// if isOrderBelow() {
+	// 	config.ElevatorInstance.State = config.Moving
+	// 	config.ElevatorInstance.Direction = elevio.MD_Down
+	// 	elevio.SetMotorDirection(elevio.MD_Down)
+	// 	return
+	// }
+
+	// this is new
+	var direction elevio.MotorDirection
+	if isOrderAbove() {
+		direction = elevio.MD_Up
+		config.ElevatorInstance.Direction = direction
+	} else if isOrderBelow() {
+		direction = elevio.MD_Down
+		config.ElevatorInstance.Direction = direction
+	} else {
+		direction = elevio.MD_Stop
+		config.ElevatorInstance.Direction = direction
 	}
 
-	// Check if there are orders above or below the current floor
-	for i := 0; i < config.NumFloors; i++ {
-		if queue[i][config.ButtonUp] || queue[i][config.ButtonDown] || queue[i][config.ButtonCab] {
-			if i > config.ElevatorInstance.Floor {
-				config.ElevatorInstance.State = config.Moving
-				config.ElevatorInstance.Direction = elevio.MD_Up
-				elevio.SetMotorDirection(elevio.MD_Up)
-				break
-			} else if i < config.ElevatorInstance.Floor {
-				config.ElevatorInstance.State = config.Moving
-				config.ElevatorInstance.Direction = elevio.MD_Down
-				elevio.SetMotorDirection(elevio.MD_Down)
-				break
-			}
-
-		}
+	if reachedFloor() {
+		elevio.SetMotorDirection(elevio.MD_Stop)
+		go openDoor(config.ElevatorInstance.Floor, int(direction))
+		return
 	}
 
+	if direction != elevio.MD_Stop {
+		config.ElevatorInstance.State = config.Moving
+		elevio.SetMotorDirection(direction)
+		return
+	}
+	elevio.SetMotorDirection(elevio.MD_Stop)
+	config.ElevatorInstance.State = config.Idle
+
+}
+
+func mapButtonToDirection(button int) elevio.MotorDirection {
+	if button == int(config.ButtonUp) {
+		return elevio.MD_Up
+	} else if button == int(config.ButtonDown) {
+		return elevio.MD_Down
+	}
+	return elevio.MD_Stop
 }
 
 func reachedFloor() bool {
 	queue := <-config.MyQueue
 	for i := 0; i < config.NumButtons; i++ {
-		if queue[elevio.GetFloor()][i] {
+		if queue[config.ElevatorInstance.Floor][i] {
 			return true
 		}
 	}
 	return false
 }
 
-func openDoor() {
+func isOrderAbove() bool {
+	queue := <-config.MyQueue
+	for i := config.ElevatorInstance.Floor + 1; i < config.NumFloors; i++ {
+		for j := 0; j < config.NumButtons; j++ {
+			if queue[i][j] {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func isOrderBelow() bool {
+	queue := <-config.MyQueue
+	for i := 0; i < config.ElevatorInstance.Floor; i++ {
+		for j := 0; j < config.NumButtons; j++ {
+			if queue[i][j] {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// TODO: Doesnt work when both up and down and then going up
+
+func openDoor(floor, button int) {
+	if config.ElevatorInstance.Direction != mapButtonToDirection(button) && config.ElevatorInstance.Direction != elevio.MD_Stop {
+		return
+	}
 	elevio.SetMotorDirection(elevio.MD_Stop)
-	config.ElevatorInstance.Direction = elevio.MD_Stop
-	elevio.SetDoorOpenLamp(true)
+	fmt.Println("Door open in floor", floor)
 	config.ElevatorInstance.State = config.DoorOpen
+	removeOrders(floor)
+	saveCabOrders()
 	time1 := time.Now()
 	for {
 		if time.Since(time1) > 3*time.Second {
 			break
 		}
 	}
-	elevio.SetDoorOpenLamp(false)
+	fmt.Println("Door closing in floor", floor)
+	if obstruction {
+		go openDoor(floor, button)
+		return
+	}
 	config.ElevatorInstance.State = config.Idle
 	decideDir()
 }
 
-func UpdateQueue(floor, button int, state config.OrderState) {
-	config.ElevatorInstance.Queue[floor][button] = state
-	hra.HRA()
+func saveCabOrders() {
+	// save cab orders to a file, if it exists overwrite, if not create a new file
+	filename := "cabOrders" + config.ElevatorInstance.ID + ".txt"
+	file, err := os.Create(filename)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer file.Close()
+	// write the cab orders to the file, so no order, unconfiremd, confirmed, or uninitialized
+	for i := 0; i < config.NumFloors; i++ {
+		file.WriteString(fmt.Sprintf("%d ", config.ElevatorInstance.Queue[i][2]))
+	}
+}
+
+func ReadCabOrders() {
+	// read cab orders from a file
+	filename := "cabOrders" + config.ElevatorInstance.ID + ".txt"
+	file, err := os.Open(filename)
+	if err != nil {
+		if os.IsNotExist(err) {
+			// File does not exist, no problem, just return
+			return
+		}
+		fmt.Println(err)
+		return
+	}
+	defer file.Close()
+	// read the cab orders from the file
+	var order int
+	for i := 0; i < config.NumFloors; i++ {
+		_, err := fmt.Fscanf(file, "%d", &order)
+		fmt.Println("order", i, order)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		config.ElevatorInstance.Queue[i][2] = config.OrderState(order)
+	}
+}
+
+func setAllLights() {
+	for i := 0; i < config.NumFloors; i++ {
+		// fmt.Println("setting lights for floor", i)
+		for j := 0; j < config.NumButtons; j++ {
+			// fmt.Println("setting lights for button", j)
+			if config.ElevatorInstance.Queue[i][j] == config.Confirmed {
+				elevio.SetButtonLamp(elevio.ButtonType(j), i, true)
+			} else {
+				elevio.SetButtonLamp(elevio.ButtonType(j), i, false)
+			}
+		}
+	}
+	// set floor indicator
+	elevio.SetFloorIndicator(config.ElevatorInstance.Floor)
+	// set door open lamp
+	if config.ElevatorInstance.State == config.DoorOpen {
+		elevio.SetDoorOpenLamp(true)
+	} else {
+		elevio.SetDoorOpenLamp(false)
+	}
 }
