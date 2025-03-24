@@ -85,16 +85,18 @@ func RestartSelf() {
 
 	fmt.Println("Restarting elevator process...")
 
-	LastRestartTime = time.Now()
-
 	cmd := exec.Command("go", "run", "main.go", "-id="+config.ElevatorInstance.ID)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
 
-	err := cmd.Run() // This function will not return until the cmd has finished running
+	err := cmd.Start()
 	if err != nil {
-		fmt.Println("Restarted process exited with error:", err)
+		fmt.Println("Failed to restart elevator:", err)
+	} else {
+		fmt.Println("Elevator restarted successfully.")
+		LastRestartTime = time.Now()
+		os.Exit(0) // Exit the current process
 	}
 }
 
