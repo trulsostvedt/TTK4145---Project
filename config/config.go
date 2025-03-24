@@ -55,3 +55,7 @@ type Elevator struct {
 var ElevatorInstance Elevator
 
 var Elevators map[string]Elevator
+
+// IsOfflineMode is true when this elevator has lost network connection and is running locally only
+// and is used in faultTolerance-go/monitor_network.go
+var IsOfflineMode = false

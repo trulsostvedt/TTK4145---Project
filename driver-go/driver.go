@@ -54,7 +54,9 @@ func RunElevator() {
 				config.ElevatorInstance.Queue[order.Floor][order.Button] = config.Confirmed
 				saveCabOrders()
 			} else {
-				config.ElevatorInstance.Queue[order.Floor][order.Button] = config.Unconfirmed
+				if !config.IsOfflineMode {
+					config.ElevatorInstance.Queue[order.Floor][order.Button] = config.Unconfirmed
+				}
 			}
 
 		case floor := <-drv_floors:

@@ -138,6 +138,9 @@ func isOrderAbove() bool {
 	queue := <-config.MyQueue
 	for i := config.ElevatorInstance.Floor + 1; i < config.NumFloors; i++ {
 		for j := 0; j < config.NumButtons; j++ {
+			if config.IsOfflineMode && j != int(config.ButtonCab) {
+				continue
+			}
 			if queue[i][j] {
 				return true
 			}
@@ -150,6 +153,9 @@ func isOrderBelow() bool {
 	queue := <-config.MyQueue
 	for i := 0; i < config.ElevatorInstance.Floor; i++ {
 		for j := 0; j < config.NumButtons; j++ {
+			if config.IsOfflineMode && j != int(config.ButtonCab) {
+				continue
+			}
 			if queue[i][j] {
 				return true
 			}
