@@ -85,6 +85,8 @@ func RestartSelf() {
 
 	fmt.Println("Restarting elevator process...")
 
+	LastRestartTime = time.Now()
+
 	cmd := exec.Command("go", "run", "main.go", "-id="+config.ElevatorInstance.ID)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -94,7 +96,6 @@ func RestartSelf() {
 	if err != nil {
 		fmt.Println("Restarted process exited with error:", err)
 	}
-	LastRestartTime = time.Now()
 }
 
 // hasActiveCabOrders() checks if the elevator has any active cab orders.
