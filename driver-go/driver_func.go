@@ -5,7 +5,7 @@ import (
 	"TTK4145---project/driver-go/elevio"
 	"fmt"
 	"os"
-	"time" 
+	"time"
 )
 
 // TODO: Decide direction only decides what direction it should go next, but do not set the motordirection.
@@ -17,16 +17,10 @@ func removeOrder(floor, button int) {
 }
 func removeOrders(floor int) {
 	queue := <-config.MyQueue
-	if config.ElevatorInstance.Direction == elevio.MD_Up && queue[floor][int(config.ButtonUp)] {
+	if queue[floor][int(config.ButtonUp)] {
 		removeOrder(floor, int(config.ButtonUp))
-	} else if config.ElevatorInstance.Direction == elevio.MD_Down && queue[floor][int(config.ButtonDown)] {
+	} else if queue[floor][int(config.ButtonDown)] {
 		removeOrder(floor, int(config.ButtonDown))
-	} else if config.ElevatorInstance.Direction == elevio.MD_Stop {
-		if queue[floor][int(config.ButtonUp)] {
-			removeOrder(floor, int(config.ButtonUp))
-		} else if queue[floor][int(config.ButtonDown)] {
-			removeOrder(floor, int(config.ButtonDown))
-		}
 	}
 	if queue[floor][int(config.ButtonCab)] {
 		removeOrder(floor, int(config.ButtonCab))
