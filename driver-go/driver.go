@@ -35,7 +35,7 @@ func RunElevator() {
 	for {
 		setAllLights()
 		// direction = decideDir()
-		// setDir(direction)
+		// setDir(direction) 
 		select {
 		case order := <-drv_buttons:
 			fmt.Printf("%+v\n", order)

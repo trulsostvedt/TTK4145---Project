@@ -5,7 +5,7 @@ import (
 	"TTK4145---project/driver-go/elevio"
 	"fmt"
 	"os"
-	"time"
+	"time" 
 )
 
 // TODO: Decide direction only decides what direction it should go next, but do not set the motordirection.

@@ -79,7 +79,7 @@ func Network(elevatorInstance *config.Elevator) {
 			}
 
 		case a := <-elevatorRx:
-			// fmt.Printf("Received: %#v\n", a)
+			fmt.Printf("Received: %#v\n", a)
 
 			elev := config.Elevator{
 				ID:        a.ID,
@@ -114,6 +114,8 @@ func SyncHallRequests() {
 				config.ElevatorInstance.Queue[i][config.ButtonDown] = elev.Queue[i][config.ButtonDown]
 			}
 		}
+	}
+	for i := 0; i < config.NumFloors; i++ {
 
 		// if all elevators have the same unconfirmed request, make the request confirmed
 		isConfirmedUp := true
