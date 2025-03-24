@@ -35,7 +35,7 @@ func RunElevator() {
 	for {
 		setAllLights()
 		// direction = decideDir()
-		// setDir(direction) 
+		// setDir(direction)
 		select {
 		case order := <-drv_buttons:
 			fmt.Printf("%+v\n", order)
@@ -45,12 +45,10 @@ func RunElevator() {
 			} else {
 				config.ElevatorInstance.Queue[order.Floor][order.Button] = config.Unconfirmed
 			}
-			decideDir()
 
 		case floor := <-drv_floors:
 			config.ElevatorInstance.Floor = floor
 			fmt.Printf("%+v\n", floor)
-			decideDir()
 
 		case obstr := <-drv_obstr:
 			// fmt.Printf("%+v\n", a)
