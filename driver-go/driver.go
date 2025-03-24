@@ -28,6 +28,17 @@ func RunElevator() {
 	go elevio.PollObstructionSwitch(drv_obstr)
 	go elevio.PollStopButton(drv_stop)
 
+	fmt.Println("starting floor: ", config.ElevatorInstance.Floor)
+	config.ElevatorInstance.Floor = elevio.GetFloor()
+	fmt.Println("starting floor: ", config.ElevatorInstance.Floor)
+	if config.ElevatorInstance.Floor == -1 {
+		elevio.SetMotorDirection(elevio.MD_Down)
+		for config.ElevatorInstance.Floor == -1 {
+			config.ElevatorInstance.Floor = <-drv_floors
+		}
+		elevio.SetMotorDirection(elevio.MD_Stop)
+	}
+
 	// direction := decideDir()
 	// setDir(direction)
 	decideDir()
@@ -35,7 +46,7 @@ func RunElevator() {
 	for {
 		setAllLights()
 		// direction = decideDir()
-		// setDir(direction) 
+		// setDir(direction)
 		select {
 		case order := <-drv_buttons:
 			fmt.Printf("%+v\n", order)
