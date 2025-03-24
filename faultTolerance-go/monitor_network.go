@@ -27,6 +27,10 @@ func MonitorNetwork() {
 
 		// If we have received a message from another elevator in the last 10 seconds, continue
 		if time.Since(LastPeerMessage) < 10*time.Second {
+			if offlineMode {
+				fmt.Println("[MonitorNetwork] Network reconnected. Exiting offline mode.")
+				config.IsOfflineMode = false
+			}
 			offlineMode = false
 			continue
 		}
@@ -36,6 +40,7 @@ func MonitorNetwork() {
 			if hasActiveCabOrders() {
 				if !offlineMode {
 					fmt.Println("[MonitorNetwork] Network lost, but cab orders remain. Entering local-only mode.")
+					config.IsOfflineMode = true
 					offlineMode = true
 				}
 				continue // Continue to check for network connection

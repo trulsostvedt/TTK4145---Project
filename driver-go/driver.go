@@ -37,8 +37,10 @@ func RunElevator() {
 				config.ElevatorInstance.Queue[a.Floor][a.Button] = config.Confirmed
 				saveCabOrders()
 			} else {
-				config.ElevatorInstance.Queue[a.Floor][a.Button] = config.Unconfirmed
-			}
+				if !config.IsOfflineMode {
+					config.ElevatorInstance.Queue[a.Floor][a.Button] = config.Unconfirmed
+				}
+			}	
 
 			decideDir()
 

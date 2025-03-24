@@ -8,12 +8,12 @@ import (
 	"time"
 )
 
-//TODO: Decide direction only decides what direction it should go next, but do not set the motordirection.
+// TODO: Decide direction only decides what direction it should go next, but do not set the motordirection.
 // Cab orders are now saved and loaded from a file.
-// Still need to change logic in deciding direction and moving the elevator. 
+// Still need to change logic in deciding direction and moving the elevator.
 func removeOrder(floor, button int) {
 	config.ElevatorInstance.Queue[floor][button] = config.NoOrder
-	
+
 }
 func removeOrders(floor int) {
 	if config.ElevatorInstance.Direction == elevio.MD_Up {
@@ -23,8 +23,6 @@ func removeOrders(floor int) {
 	}
 	removeOrder(floor, int(config.ButtonCab))
 }
-
-
 
 func decideDir() {
 
@@ -48,13 +46,15 @@ func decideDir() {
 
 	// Check if there is an order at the current floor and stop
 	for i := 0; i < config.NumButtons; i++ {
+		// Hopp over hall calls i offline mode
+		if config.IsOfflineMode && i != int(config.ButtonCab) {
+			continue
+		}
 		if queue[config.ElevatorInstance.Floor][i] {
-
 			elevio.SetMotorDirection(elevio.MD_Stop)
 			go openDoor(config.ElevatorInstance.Floor)
-			break
+			return
 		}
-
 	}
 
 	// if reachedFloor() {
@@ -90,6 +90,9 @@ func isOrderAbove() bool {
 	queue := <-config.MyQueue
 	for i := config.ElevatorInstance.Floor + 1; i < config.NumFloors; i++ {
 		for j := 0; j < config.NumButtons; j++ {
+			if config.IsOfflineMode && j != int(config.ButtonCab) {
+				continue
+			}
 			if queue[i][j] {
 				return true
 			}
@@ -102,6 +105,9 @@ func isOrderBelow() bool {
 	queue := <-config.MyQueue
 	for i := 0; i < config.ElevatorInstance.Floor; i++ {
 		for j := 0; j < config.NumButtons; j++ {
+			if config.IsOfflineMode && j != int(config.ButtonCab) {
+				continue
+			}
 			if queue[i][j] {
 				return true
 			}

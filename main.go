@@ -7,14 +7,18 @@ import (
 	elevio "TTK4145---project/driver-go/elevio"
 	faultTolerance "TTK4145---project/faultTolerance-go"
 	"flag"
+	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
-
 	go network.Network(&config.ElevatorInstance)
 	go driver.RunElevator()
 	go faultTolerance.MonitorMovement()
 	go faultTolerance.MonitorNetwork()
+	go handleExitSignal()
 	select {}
 }
 
@@ -43,4 +47,14 @@ func init() {
 	config.Elevators[config.ElevatorInstance.ID] = config.ElevatorInstance
 }
 
+func handleExitSignal() {
+	sigChan := make(chan os.Signal, 1)
 
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		sig := <-sigChan
+		fmt.Printf("\n[System] Caught signal: %s. Exiting cleanly.\n", sig)
+		os.Exit(0)
+	}()
+}
