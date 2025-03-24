@@ -103,15 +103,34 @@ func Network(elevatorInstance *config.Elevator) {
 func SyncHallRequests() {
 
 	for i := 0; i < config.NumFloors; i++ {
-		// if this elevator has uninitialized requests, copy the other elevators' requests
+		// If this elevator has uninitialized requests, attempt to copy from other elevators
 		if config.ElevatorInstance.Queue[i][config.ButtonUp] == config.Uninitialized {
+			initialized := false
 			for _, elev := range config.Elevators {
-				config.ElevatorInstance.Queue[i][config.ButtonUp] = elev.Queue[i][config.ButtonUp]
+				if elev.Queue[i][config.ButtonUp] != config.Uninitialized {
+					config.ElevatorInstance.Queue[i][config.ButtonUp] = elev.Queue[i][config.ButtonUp]
+					initialized = true
+					break
+				}
+			}
+			// If no other elevator has an initialized value, set a default value
+			if !initialized {
+				config.ElevatorInstance.Queue[i][config.ButtonUp] = 0 // or another default value
 			}
 		}
+
 		if config.ElevatorInstance.Queue[i][config.ButtonDown] == config.Uninitialized {
+			initialized := false
 			for _, elev := range config.Elevators {
-				config.ElevatorInstance.Queue[i][config.ButtonDown] = elev.Queue[i][config.ButtonDown]
+				if elev.Queue[i][config.ButtonDown] != config.Uninitialized {
+					config.ElevatorInstance.Queue[i][config.ButtonDown] = elev.Queue[i][config.ButtonDown]
+					initialized = true
+					break
+				}
+			}
+			// If no other elevator has an initialized value, set a default value
+			if !initialized {
+				config.ElevatorInstance.Queue[i][config.ButtonDown] = 0 // or another default value
 			}
 		}
 	}
