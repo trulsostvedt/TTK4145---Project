@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// timeoutBetweenFloors is the time the elevator waits before attempting to restart itself
 const (
 	timeoutBetweenFloors = 10 * time.Second
 	tickRate             = 100 * time.Millisecond

@@ -1,14 +1,12 @@
 package faulttolerance
 
 import (
+	"TTK4145---project/config"
 	"fmt"
 	"net"
 	"os"
 	"os/exec"
-	"runtime"
 	"time"
-
-	"TTK4145---project/config"
 )
 
 var (
@@ -21,22 +19,37 @@ var (
 // MonitorNetwork is a function that monitors the network connection.
 // If the elevator has not received a message from another elevator in 10 seconds,
 // it will attempt to restart itself.
+// If the elevator is in offline mode and has completed all cab orders, it will restart itself.
 func MonitorNetwork() {
+	offlineMode := false
+
 	for {
 		time.Sleep(2 * time.Second)
 
+		// If we have received a message from another elevator in the last 10 seconds, continue
 		if time.Since(LastPeerMessage) < 10*time.Second {
+			offlineMode = false
 			continue
 		}
 
+		// If we have lost network connection, check if we have active cab orders
 		if !CheckNetworkStatus() {
-			fmt.Println("[MonitorNetwork] Network failure detected. Waiting for recovery...")
-			time.Sleep(10 * time.Second)
-
-			if !CheckNetworkStatus() {
-				fmt.Println("[MonitorNetwork] Restarting self due to persistent network failure...")
+			if hasActiveCabOrders() {
+				if !offlineMode {
+					fmt.Println("[MonitorNetwork] Network lost, but cab orders remain. Entering local-only mode.")
+					offlineMode = true
+				}
+				continue // Continue to check for network connection
+			} else {
+				fmt.Println("[MonitorNetwork] Network lost and no active cab orders. Restarting to reconnect...")
 				RestartSelf()
 			}
+		}
+
+		// If we are in offline mode and have completed all cab orders, restart to rejoin network
+		if offlineMode && !hasActiveCabOrders() {
+			fmt.Println("[MonitorNetwork] Cab orders completed in offline mode. Restarting to rejoin network.")
+			RestartSelf()
 		}
 	}
 }
@@ -72,13 +85,10 @@ func RestartSelf() {
 
 	fmt.Println("Restarting elevator process...")
 
-	var cmd *exec.Cmd
-
-	if runtime.GOOS == "windows" { // Windows
-		cmd = exec.Command("cmd.exe", "/C", "start", "cmd.exe", "/K", "go run main.go -id="+config.ElevatorInstance.ID)
-	} else { // Linux or Mac
-		cmd = exec.Command("gnome-terminal", "--", "go", "run", "main.go", "-id="+config.ElevatorInstance.ID)
-	}
+	cmd := exec.Command("go", "run", "main.go", "-id="+config.ElevatorInstance.ID)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
 
 	err := cmd.Start()
 	if err != nil {
@@ -88,4 +98,15 @@ func RestartSelf() {
 		LastRestartTime = time.Now()
 		os.Exit(1)
 	}
+}
+
+// hasActiveCabOrders() checks if the elevator has any active cab orders.
+// If the elevator has active cab orders, it should not restart.
+func hasActiveCabOrders() bool {
+	for floor := 0; floor < config.NumFloors; floor++ {
+		if config.ElevatorInstance.Queue[floor][config.ButtonCab] == config.Confirmed {
+			return true
+		}
+	}
+	return false
 }
