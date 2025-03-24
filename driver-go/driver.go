@@ -60,6 +60,7 @@ func RunElevator() {
 		case floor := <-drv_floors:
 			config.ElevatorInstance.Floor = floor
 			fmt.Printf("%+v\n", floor)
+			decideDir()
 
 		case obstr := <-drv_obstr:
 			// fmt.Printf("%+v\n", a)
