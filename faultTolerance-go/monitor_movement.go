@@ -17,24 +17,36 @@ func MonitorMovement() {
 	fmt.Println("[Movementmonitor]: Starting elevator movement monitor")
 	lastFloor := config.ElevatorInstance.Floor
 	lastFloorTime := time.Now()
+	lastState := config.ElevatorInstance.State
 
 	for {
 		time.Sleep(tickRate)
 
 		currentFloor := config.ElevatorInstance.Floor
+		currentState := config.ElevatorInstance.State
 
+		// Reset timer if the elevator starts moving
+		if currentState == config.Moving && lastState != config.Moving {
+			lastFloorTime = time.Now()
+			fmt.Println("[Movementmonitor]: Elevator started moving. Timer reset.")
+		}
+
+		// Update last floor and reset timer when reaching a new floor
 		if currentFloor != -1 && currentFloor != lastFloor {
 			lastFloor = currentFloor
 			lastFloorTime = time.Now()
 			fmt.Printf("[Movementmonitor]: Reached floor %d\n", currentFloor)
 		}
 
-		if config.ElevatorInstance.State == config.Moving &&
+		// Check for timeout between floors
+		if currentState == config.Moving &&
 			time.Since(lastFloorTime) > timeoutBetweenFloors {
 
-			fmt.Println("\n [Movementmonitor]: Timeout: Elevator appears stuck between floors.")
-			fmt.Println("\n [Movementmonitor]: Attempting self-restart...")
+			fmt.Println("\n[Movementmonitor]: Timeout: Elevator appears stuck between floors.")
+			fmt.Println("\n[Movementmonitor]: Attempting self-restart...")
 			RestartSelf()
 		}
+
+		lastState = currentState
 	}
 }

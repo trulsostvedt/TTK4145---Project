@@ -86,7 +86,15 @@ func decideDir() {
 		config.ElevatorInstance.Direction = direction
 	}
 
-	if reachedFloor() {
+	if reachedFloor(elevio.BT_HallUp) && direction != elevio.MD_Down {
+		elevio.SetMotorDirection(elevio.MD_Stop)
+		go openDoor(config.ElevatorInstance.Floor, int(direction))
+		return
+	} else if reachedFloor(elevio.BT_HallDown) && direction != elevio.MD_Up {
+		elevio.SetMotorDirection(elevio.MD_Stop)
+		go openDoor(config.ElevatorInstance.Floor, int(direction))
+		return
+	} else if reachedFloor(elevio.BT_Cab) {
 		elevio.SetMotorDirection(elevio.MD_Stop)
 		go openDoor(config.ElevatorInstance.Floor, int(direction))
 		return
@@ -111,13 +119,22 @@ func mapButtonToDirection(button int) elevio.MotorDirection {
 	return elevio.MD_Stop
 }
 
-func reachedFloor() bool {
-	queue := <-config.MyQueue
-	for i := 0; i < config.NumButtons; i++ {
-		if queue[config.ElevatorInstance.Floor][i] {
-			return true
-		}
+func mapDirectionToButton(direction elevio.MotorDirection) int {
+	if direction == elevio.MD_Up {
+		return int(config.ButtonUp)
+	} else if direction == elevio.MD_Down {
+		return int(config.ButtonDown)
 	}
+	return -1
+}
+
+func reachedFloor(button elevio.ButtonType) bool {
+	queue := <-config.MyQueue
+
+	if queue[config.ElevatorInstance.Floor][int(button)] {
+		return true
+	}
+
 	return false
 }
 
@@ -148,9 +165,7 @@ func isOrderBelow() bool {
 // TODO: Doesnt work when both up and down and then going up
 
 func openDoor(floor, button int) {
-	if config.ElevatorInstance.Direction != mapButtonToDirection(button) && config.ElevatorInstance.Direction != elevio.MD_Stop {
-		return
-	}
+
 	elevio.SetMotorDirection(elevio.MD_Stop)
 	fmt.Println("Door open in floor", floor)
 	config.ElevatorInstance.State = config.DoorOpen
