@@ -115,7 +115,7 @@ func SyncHallRequests() {
 			}
 			// If no other elevator has an initialized value, set a default value
 			if !initialized {
-				config.ElevatorInstance.Queue[i][config.ButtonUp] = 0 // or another default value
+				config.ElevatorInstance.Queue[i][config.ButtonUp] = config.NoOrder // or another default value
 			}
 		}
 
@@ -130,7 +130,7 @@ func SyncHallRequests() {
 			}
 			// If no other elevator has an initialized value, set a default value
 			if !initialized {
-				config.ElevatorInstance.Queue[i][config.ButtonDown] = 0 // or another default value
+				config.ElevatorInstance.Queue[i][config.ButtonDown] = config.NoOrder // or another default value
 			}
 		}
 	}
