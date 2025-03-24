@@ -16,19 +16,21 @@ func removeOrder(floor, button int) {
 
 }
 func removeOrders(floor int) {
-	if config.ElevatorInstance.Direction == elevio.MD_Up {
+	queue := <-config.MyQueue
+	if config.ElevatorInstance.Direction == elevio.MD_Up && queue[floor][int(config.ButtonUp)] {
 		removeOrder(floor, int(config.ButtonUp))
-	} else if config.ElevatorInstance.Direction == elevio.MD_Down {
+	} else if config.ElevatorInstance.Direction == elevio.MD_Down && queue[floor][int(config.ButtonDown)] {
 		removeOrder(floor, int(config.ButtonDown))
 	} else if config.ElevatorInstance.Direction == elevio.MD_Stop {
-		queue := <-config.MyQueue
 		if queue[floor][int(config.ButtonUp)] {
 			removeOrder(floor, int(config.ButtonUp))
 		} else if queue[floor][int(config.ButtonDown)] {
 			removeOrder(floor, int(config.ButtonDown))
 		}
 	}
-	removeOrder(floor, int(config.ButtonCab))
+	if queue[floor][int(config.ButtonCab)] {
+		removeOrder(floor, int(config.ButtonCab))
+	}
 }
 
 func decideDir() {
