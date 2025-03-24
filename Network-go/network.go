@@ -114,7 +114,8 @@ func SyncHallRequests() {
 				config.ElevatorInstance.Queue[i][config.ButtonDown] = elev.Queue[i][config.ButtonDown]
 			}
 		}
-
+	}
+	for i := 0; i < config.NumFloors; i++ {
 		// if all elevators have the same unconfirmed request, make the request confirmed
 		isConfirmedUp := true
 		for _, elev := range config.Elevators {
