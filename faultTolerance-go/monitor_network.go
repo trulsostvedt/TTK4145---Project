@@ -90,14 +90,11 @@ func RestartSelf() {
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
 
-	err := cmd.Start()
+	err := cmd.Run() // This function will not return until the cmd has finished running
 	if err != nil {
-		fmt.Println("Failed to restart elevator:", err)
-	} else {
-		fmt.Println("Elevator restarted successfully.")
-		LastRestartTime = time.Now()
-		os.Exit(1)
+		fmt.Println("Restarted process exited with error:", err)
 	}
+	LastRestartTime = time.Now()
 }
 
 // hasActiveCabOrders() checks if the elevator has any active cab orders.
