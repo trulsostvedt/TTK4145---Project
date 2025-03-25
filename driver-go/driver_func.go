@@ -230,9 +230,6 @@ func ReadCabOrders() {
 	}
 }
 
-func RunElevatorWithContext(ctx context.Context) {
-	go setAllLightsLoop(ctx)
-}
 
 func setAllLightsLoop(ctx context.Context) {
 	ticker := time.NewTicker(100 * time.Millisecond)

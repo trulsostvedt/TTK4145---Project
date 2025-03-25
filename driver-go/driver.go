@@ -9,7 +9,7 @@ import (
 
 var obstruction = false
 
-func RunElevator(ctx context.Context) {
+func RunElevatorWithContext(ctx context.Context) {
 	numFloors := config.NumFloors
 	elevio.Init("localhost:"+config.Port, numFloors) // default 15657
 
@@ -44,7 +44,7 @@ func RunElevator(ctx context.Context) {
 	}
 
 	decideDir()
-
+	go setAllLightsLoop(ctx)
 	for {
 		select {
 		case <-ctx.Done():
@@ -86,7 +86,5 @@ func RunElevator(ctx context.Context) {
 			decideDir()
 
 		}
-
-		setAllLights()
 	}
 }
