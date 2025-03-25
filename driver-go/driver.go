@@ -2,6 +2,7 @@ package driver
 
 import (
 	"TTK4145---project/config"
+	hra "TTK4145---project/cost_fns"
 	"TTK4145---project/driver-go/elevio"
 	"fmt"
 )
@@ -36,6 +37,7 @@ func RunElevator() {
 		for config.ElevatorInstance.Floor == -1 {
 			config.ElevatorInstance.Floor = <-drv_floors
 		}
+
 		elevio.SetMotorDirection(elevio.MD_Stop)
 	}
 
@@ -43,10 +45,20 @@ func RunElevator() {
 	// setDir(direction)
 	decideDir()
 
+	//go listenForQueueChanges()
+
 	for {
 		setAllLights()
-		// direction = decideDir()
-		// setDir(direction)
+
+		if config.ElevatorInstance.State == config.Idle && elevio.GetFloor() == -1 {
+			elevio.SetMotorDirection(elevio.MD_Down)
+			config.ElevatorInstance.Floor = -1
+			for config.ElevatorInstance.Floor == -1 {
+				config.ElevatorInstance.Floor = <-drv_floors
+			}
+			elevio.SetMotorDirection(elevio.MD_Stop)
+		}
+
 		select {
 		case order := <-drv_buttons:
 			fmt.Printf("%+v\n", order)
@@ -65,30 +77,24 @@ func RunElevator() {
 			decideDir()
 
 		case obstr := <-drv_obstr:
-			// fmt.Printf("%+v\n", a)
-			// if a {
-			// 	elevio.SetMotorDirection(elevio.MD_Stop)
-			// 	config.ElevatorInstance.Direction = elevio.MD_Stop
-			// } else {
-			// 	elevio.SetMotorDirection(d)
-			// 	config.ElevatorInstance.Direction = d
-			// }
 			obstruction = obstr
 
 		case a := <-drv_stop:
 			fmt.Printf("%+v\n", a)
 			for f := 0; f < numFloors; f++ {
 				for b := elevio.ButtonType(0); b < 3; b++ {
-					// elevio.SetButtonLamp(b, f, false)
 					continue
 				}
 			}
-		case <-config.MyQueue:
-			// direction = decideDir()
-			// setDir(direction)
-			decideDir()
 
+		case <-config.MyQueue:
+			decideDir()
 		}
 
+		// Check if the queue has changed
+		if hasQueueChanged(config.ElevatorInstance.Queue, previousQueue) {
+			previousQueue = config.ElevatorInstance.Queue // Update the previous state
+			hra.HRA()                                     // Run HRA only when the queue changes
+		}
 	}
 }

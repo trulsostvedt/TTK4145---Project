@@ -8,6 +8,8 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"sort"
+	"strings"
 )
 
 // Struct members must be public in order to be accessible by json.Marshal/.Unmarshal
@@ -121,11 +123,74 @@ func HRA() {
 		return
 	}
 
-	fmt.Printf("output: \n")
-	for k, v := range *output {
-		fmt.Printf("%6v :  %+v\n", k, v)
+	// Pretty print the output in the desired format
+	fmt.Print("\033[H\033[2J") // Clear the terminal
+
+	// Sort elevator IDs to ensure the lowest ID is first
+	elevatorIDs := make([]string, 0, len(*output))
+	for id := range *output {
+		elevatorIDs = append(elevatorIDs, id)
 	}
-	fmt.Println((*output)[config.ElevatorInstance.ID])
+	sort.Strings(elevatorIDs)
+
+	// Define box dimensions
+	boxWidth := 25
+	boxContentWidth := boxWidth - 2
+
+	// Print top border for each elevator box
+	fmt.Printf("%8s", "")
+	for range elevatorIDs {
+		fmt.Printf("┌%s┐", strings.Repeat("─", boxContentWidth))
+	}
+	fmt.Println()
+
+	// Print elevator IDs centered in the box
+	fmt.Printf("%8s", "")
+	for _, id := range elevatorIDs {
+		padding := (boxContentWidth - len(id)) / 2
+		fmt.Printf("│%s%s%s│", strings.Repeat(" ", padding), id, strings.Repeat(" ", boxContentWidth-len(id)-padding))
+	}
+	fmt.Println()
+
+	// Print elevator states centered in the box
+	fmt.Printf("%8s", "")
+	for _, id := range elevatorIDs {
+		state := input.States[id].Behavior
+		padding := (boxContentWidth - len(state)) / 2
+		fmt.Printf("│%s%s%s│", strings.Repeat(" ", padding), state, strings.Repeat(" ", boxContentWidth-len(state)-padding))
+	}
+	fmt.Println()
+
+	// Print middle border for each elevator box
+	fmt.Printf("%8s", "")
+	for range elevatorIDs {
+		fmt.Printf("├%s┤", strings.Repeat("─", boxContentWidth))
+	}
+	fmt.Println()
+
+	// Print "up", "down", "cab" labels centered in the box
+	fmt.Printf("%8s", "")
+	for range elevatorIDs {
+		fmt.Printf("│%7s %7s %7s│", "up", "down", "cab")
+	}
+	fmt.Println()
+
+	// Print the states for each floor
+	for floor := config.NumFloors - 1; floor >= 0; floor-- {
+		fmt.Printf("hall%-2d  ", floor)
+		for _, id := range elevatorIDs {
+			states := (*output)[id]
+			fmt.Printf("│%7v %7v %7v│", states[floor][0], states[floor][1], states[floor][2]) // Box content
+		}
+		fmt.Println()
+	}
+
+	// Print bottom border for each elevator box
+	fmt.Printf("%8s", "")
+	for range elevatorIDs {
+		fmt.Printf("└%s┘", strings.Repeat("─", boxContentWidth))
+	}
+	fmt.Println()
 
 	config.MyQueue <- (*output)[config.ElevatorInstance.ID]
 

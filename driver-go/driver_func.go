@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+var previousQueue [config.NumFloors][config.NumButtons]config.OrderState
+
 // TODO: Decide direction only decides what direction it should go next, but do not set the motordirection.
 // Cab orders are now saved and loaded from a file.
 // Still need to change logic in deciding direction and moving the elevator.
@@ -44,30 +46,6 @@ func decideDir() {
 		elevio.SetMotorDirection(elevio.MD_Stop)
 		return
 	}
-
-	// // Check if there is an order at the current floor and stop
-	// for i := 0; i < config.NumButtons; i++ {
-	// 	if queue[config.ElevatorInstance.Floor][i] {
-
-	// 		elevio.SetMotorDirection(elevio.MD_Stop)
-	// 		go openDoor(config.ElevatorInstance.Floor)
-	// 		break
-	// 	}
-
-	// }
-
-	// if isOrderAbove() {
-	// 	config.ElevatorInstance.State = config.Moving
-	// 	config.ElevatorInstance.Direction = elevio.MD_Up
-	// 	elevio.SetMotorDirection(elevio.MD_Up)
-	// 	return
-	// }
-	// if isOrderBelow() {
-	// 	config.ElevatorInstance.State = config.Moving
-	// 	config.ElevatorInstance.Direction = elevio.MD_Down
-	// 	elevio.SetMotorDirection(elevio.MD_Down)
-	// 	return
-	// }
 
 	// this is new
 	var direction elevio.MotorDirection
@@ -162,6 +140,17 @@ func isOrderBelow() bool {
 		}
 	}
 	return false
+}
+
+func hasQueueChanged(current, previous [config.NumFloors][config.NumButtons]config.OrderState) bool {
+    for i := 0; i < config.NumFloors; i++ {
+        for j := 0; j < config.NumButtons; j++ {
+            if current[i][j] != previous[i][j] {
+                return true
+            }
+        }
+    }
+    return false
 }
 
 // TODO: Doesnt work when both up and down and then going up
