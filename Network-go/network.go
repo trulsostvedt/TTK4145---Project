@@ -2,34 +2,23 @@ package network
 
 import (
 	"TTK4145---project/Network-go/network/bcast"
-	"TTK4145---project/Network-go/network/conn"
 	"TTK4145---project/Network-go/network/localip"
 	"TTK4145---project/Network-go/network/peers"
 	"TTK4145---project/config"
 	hra "TTK4145---project/cost_fns"
-	faulttolerance "TTK4145---project/faultTolerance-go"
 
-	// "TTK4145---project/driver-go"
-
+	"context"
 	"fmt"
 	"os"
 	"time"
 )
 
-// We define some custom struct to send over the network.
-// Note that all members we want to transmit must be public. Any private members
-//
-//	will be received as zero-values.
+// Run is the entry point for the network system.
+// It listens and broadcasts elevator state, and tracks peers.
+// It stops cleanly when the context is cancelled.
+func Run(ctx context.Context) {
+	var id = config.ElevatorInstance.ID
 
-func Network(elevatorInstance *config.Elevator) {
-	// Our id can be anything. Here we pass it on the command line, using
-	//  `go run main.go -id=our_id`
-
-	var id = elevatorInstance.ID
-
-	// ... or alternatively, we can use the local IP address.
-	// (But since we can run multiple programs on the same PC, we also append the
-	//  process ID)
 	if id == "" {
 		localIP, err := localip.LocalIP()
 		if err != nil {
@@ -39,35 +28,39 @@ func Network(elevatorInstance *config.Elevator) {
 		id = fmt.Sprintf("peer-%s-%d", localIP, os.Getpid())
 	}
 
-	// We make a channel for receiving updates on the id's of the peers that are
-	//  alive on the network
 	peerUpdateCh := make(chan peers.PeerUpdate)
-	// We can disable/enable the transmitter after it has been started.
-	// This could be used to signal that we are somehow "unavailable".
 	peerTxEnable := make(chan bool)
 	go peers.Transmitter(15647, id, peerTxEnable)
 	go peers.Receiver(15647, peerUpdateCh)
 
-	// We make channels for sending and receiving our custom data types
-	elevatorTx := make(chan config.Elevator) // Transmitter
-	elevatorRx := make(chan config.Elevator) // Receiver
-	// ... and start the transmitter/receiver pair on some port
-	// These functions can take any number of channels! It is also possible to
-	//  start multiple transmitters/receivers on the same port.
+	elevatorTx := make(chan config.Elevator)
+	elevatorRx := make(chan config.Elevator)
 	go bcast.Transmitter(16569, elevatorTx)
 	go bcast.Receiver(16569, elevatorRx)
 
-	// The example message. We just send one of these every second.
+	// Goroutine to send elevator state at regular intervals
 	go func() {
+		ticker := time.NewTicker(20 * time.Millisecond)
+		defer ticker.Stop()
+
 		for {
-			elevatorTx <- *elevatorInstance
-			time.Sleep(20 * time.Millisecond)
+			select {
+			case <-ctx.Done():
+				fmt.Println("[Network] Shutting down transmitter goroutine.")
+				return
+			case <-ticker.C:
+				elevatorTx <- config.ElevatorInstance
+			}
 		}
 	}()
 
-	fmt.Println("Started")
+	fmt.Println("[Network] Started")
 	for {
 		select {
+		case <-ctx.Done():
+			fmt.Println("[Network] Context cancelled, shutting down network listener.")
+			return
+
 		case p := <-peerUpdateCh:
 			fmt.Printf("Peer update:\n")
 			fmt.Printf("  Peers:    %q\n", p.Peers)
@@ -92,51 +85,33 @@ func Network(elevatorInstance *config.Elevator) {
 			config.Elevators[a.ID] = elev
 
 			SyncHallRequests()
-
 			hra.HRA()
-
 		}
 	}
 }
 
 // SyncHallRequests synchronizes the hall requests between all elevators
 func SyncHallRequests() {
-
 	for i := 0; i < config.NumFloors; i++ {
-		// If this elevator has uninitialized requests, attempt to copy from other elevators
 		if config.ElevatorInstance.Queue[i][config.ButtonUp] == config.Uninitialized {
-			initialized := false
 			for _, elev := range config.Elevators {
 				if elev.Queue[i][config.ButtonUp] != config.Uninitialized {
 					config.ElevatorInstance.Queue[i][config.ButtonUp] = elev.Queue[i][config.ButtonUp]
-					initialized = true
 					break
 				}
 			}
-			// If no other elevator has an initialized value, set a default value
-			if !initialized {
-				config.ElevatorInstance.Queue[i][config.ButtonUp] = config.NoOrder // or another default value
-			}
 		}
-
 		if config.ElevatorInstance.Queue[i][config.ButtonDown] == config.Uninitialized {
-			initialized := false
 			for _, elev := range config.Elevators {
 				if elev.Queue[i][config.ButtonDown] != config.Uninitialized {
 					config.ElevatorInstance.Queue[i][config.ButtonDown] = elev.Queue[i][config.ButtonDown]
-					initialized = true
 					break
 				}
 			}
-			// If no other elevator has an initialized value, set a default value
-			if !initialized {
-				config.ElevatorInstance.Queue[i][config.ButtonDown] = config.NoOrder // or another default value
-			}
 		}
 	}
-	for i := 0; i < config.NumFloors; i++ {
 
-		// if all elevators have the same unconfirmed request, make the request confirmed
+	for i := 0; i < config.NumFloors; i++ {
 		isConfirmedUp := true
 		for _, elev := range config.Elevators {
 			if elev.Queue[i][config.ButtonUp] != config.Unconfirmed {
@@ -156,12 +131,10 @@ func SyncHallRequests() {
 			}
 		}
 		if isConfirmedDown {
-
 			config.ElevatorInstance.Queue[i][config.ButtonDown] = config.Confirmed
 		}
 	}
 
-	// if one elevator is one step ahead, make the request the same as the one step ahead
 	for i := 0; i < config.NumFloors; i++ {
 		for _, elev := range config.Elevators {
 			up := elev.Queue[i][config.ButtonUp] - config.ElevatorInstance.Queue[i][config.ButtonUp]
@@ -174,32 +147,6 @@ func SyncHallRequests() {
 			if down == 1 || down == -2 {
 				config.ElevatorInstance.Queue[i][config.ButtonDown] = elev.Queue[i][config.ButtonDown]
 			}
-		}
-	}
-
-}
-
-type PeerUpdate struct {
-	Peers []string
-	New   string
-	Lost  []string
-}
-
-// Receiver listens for incoming messages on the given port, and sends them to the
-// provided channel.
-func Receiver(port int, peerUpdateCh chan<- PeerUpdate) {
-	var buf [1024]byte
-	conn := conn.DialBroadcastUDP(port)
-	if conn == nil {
-		fmt.Println("Kunne ikke opprette UDP-forbindelse!")
-		return
-	}
-
-	for {
-		conn.SetReadDeadline(time.Now().Add(faulttolerance.Interval))
-		n, _, err := conn.ReadFrom(buf[0:])
-		if err == nil && n > 0 {
-			faulttolerance.LastPeerMessage = time.Now() // Reset timer
 		}
 	}
 }

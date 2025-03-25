@@ -3,6 +3,7 @@ package driver
 import (
 	"TTK4145---project/config"
 	"TTK4145---project/driver-go/elevio"
+	"context"
 	"fmt"
 	"os"
 	"time"
@@ -106,40 +107,37 @@ func decideDir() {
 
 }
 
-func mapButtonToDirection(button int) elevio.MotorDirection {
-	if button == int(config.ButtonUp) {
-		return elevio.MD_Up
-	} else if button == int(config.ButtonDown) {
-		return elevio.MD_Down
-	}
-	return elevio.MD_Stop
-}
+// func mapButtonToDirection(button int) elevio.MotorDirection {
+// 	if button == int(config.ButtonUp) {
+// 		return elevio.MD_Up
+// 	} else if button == int(config.ButtonDown) {
+// 		return elevio.MD_Down
+// 	}
+// 	return elevio.MD_Stop
+// }
 
-func mapDirectionToButton(direction elevio.MotorDirection) int {
-	if direction == elevio.MD_Up {
-		return int(config.ButtonUp)
-	} else if direction == elevio.MD_Down {
-		return int(config.ButtonDown)
-	}
-	return -1
-}
+// func mapDirectionToButton(direction elevio.MotorDirection) int {
+// 	if direction == elevio.MD_Up {
+// 		return int(config.ButtonUp)
+// 	} else if direction == elevio.MD_Down {
+// 		return int(config.ButtonDown)
+// 	}
+// 	return -1
+// }
 
 func reachedFloor(button elevio.ButtonType) bool {
 	queue := <-config.MyQueue
-
-	if queue[config.ElevatorInstance.Floor][int(button)] {
-		return true
-	}
-
-	return false
+	return queue[config.ElevatorInstance.Floor][int(button)]
 }
 
 func isOrderAbove() bool {
 	queue := <-config.MyQueue
 	for i := config.ElevatorInstance.Floor + 1; i < config.NumFloors; i++ {
 		for j := 0; j < config.NumButtons; j++ {
-			if config.IsOfflineMode && j != int(config.ButtonCab) {
-				continue
+			if config.IsOfflineMode {
+				if config.ElevatorInstance.Queue[i][j] != config.Confirmed {
+					continue
+				}
 			}
 			if queue[i][j] {
 				return true
@@ -153,8 +151,10 @@ func isOrderBelow() bool {
 	queue := <-config.MyQueue
 	for i := 0; i < config.ElevatorInstance.Floor; i++ {
 		for j := 0; j < config.NumButtons; j++ {
-			if config.IsOfflineMode && j != int(config.ButtonCab) {
-				continue
+			if config.IsOfflineMode {
+				if config.ElevatorInstance.Queue[i][j] != config.Confirmed {
+					continue
+				}
 			}
 			if queue[i][j] {
 				return true
@@ -227,6 +227,25 @@ func ReadCabOrders() {
 		}
 
 		config.ElevatorInstance.Queue[i][2] = config.OrderState(order)
+	}
+}
+
+func RunElevatorWithContext(ctx context.Context) {
+	go setAllLightsLoop(ctx)
+}
+
+func setAllLightsLoop(ctx context.Context) {
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			fmt.Println("[Driver] Stopping light updates")
+			return
+		case <-ticker.C:
+			setAllLights()
+		}
 	}
 }
 

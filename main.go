@@ -1,11 +1,10 @@
 package main
 
 import (
-	network "TTK4145---project/Network-go"
-	config "TTK4145---project/config"
-	driver "TTK4145---project/driver-go"
-	elevio "TTK4145---project/driver-go/elevio"
-	faultTolerance "TTK4145---project/faultTolerance-go"
+	"TTK4145---project/config"
+	"TTK4145---project/driver-go/elevio"
+	"TTK4145---project/elevatorApp"
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -14,26 +13,18 @@ import (
 )
 
 func main() {
-	go network.Network(&config.ElevatorInstance)
-	go driver.RunElevator()
-	go faultTolerance.MonitorMovement()
-	go faultTolerance.MonitorNetwork()
-	go handleExitSignal()
-	select {}
-}
-
-func init() {
+	// --- Parse flags ---
 	flag.StringVar(&config.ElevatorInstance.ID, "id", "", "id of this peer")
 	flag.StringVar(&config.Port, "port", "15657", "port to listen on")
 	flag.Parse()
 
+	// --- Initialize elevator state ---
 	queue := [config.NumFloors][config.NumButtons]config.OrderState{}
 	for i := 0; i < config.NumFloors; i++ {
 		for j := 0; j < config.NumButtons; j++ {
 			queue[i][j] = config.Uninitialized
 		}
 	}
-
 	config.ElevatorInstance = config.Elevator{
 		ID:        config.ElevatorInstance.ID,
 		State:     config.Idle,
@@ -41,20 +32,33 @@ func init() {
 		Floor:     0,
 		Queue:     queue,
 	}
-	driver.ReadCabOrders()
-
 	config.Elevators = make(map[string]config.Elevator)
 	config.Elevators[config.ElevatorInstance.ID] = config.ElevatorInstance
-}
 
-func handleExitSignal() {
+	// --- Set up signal handler ---
 	sigChan := make(chan os.Signal, 1)
-
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
-	go func() {
-		sig := <-sigChan
-		fmt.Printf("\n[System] Caught signal: %s. Exiting cleanly.\n", sig)
-		os.Exit(0)
-	}()
+	// --- Create restart channel ---
+	restartCh := make(chan struct{})
+
+	for {
+		ctx, cancel := context.WithCancel(context.Background())
+		app := elevatorApp.New(ctx, restartCh)
+
+		// Handle interrupt (Ctrl+C) or SIGTERM
+		go func() {
+			select {
+			case sig := <-sigChan:
+				fmt.Printf("\n[Main] Caught signal: %s. Exiting cleanly.\n", sig)
+				cancel()
+				os.Exit(0)
+			case <-restartCh:
+				fmt.Println("[Main] Restart signal received. Restarting app...")
+				cancel()
+			}
+		}()
+
+		app.Start()
+	}
 }

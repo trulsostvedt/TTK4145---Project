@@ -2,6 +2,7 @@ package faulttolerance
 
 import (
 	"TTK4145---project/config"
+	"context"
 	"fmt"
 	"time"
 )
@@ -12,42 +13,52 @@ const (
 	tickRate             = 100 * time.Millisecond
 )
 
-// MonitorMovement is a function that monitors the movement of the elevator.
-// If the elevator is stuck between floors, it will attempt to restart itself.
-func MonitorMovement() {
-	fmt.Println("[Movementmonitor]: Starting elevator movement monitor")
+// MonitorMovement detects if the elevator is stuck between floors for too long,
+// and signals a restart through restartCh if necessary.
+func MonitorMovement(ctx context.Context, restartCh chan struct{}) {
+	fmt.Println("[Movementmonitor]: Started")
 	lastFloor := config.ElevatorInstance.Floor
 	lastFloorTime := time.Now()
 	lastState := config.ElevatorInstance.State
 
+	ticker := time.NewTicker(tickRate)
+	defer ticker.Stop() 
+	
 	for {
-		time.Sleep(tickRate)
+		select {
+		case <-ctx.Done():
+			fmt.Println("[MovementMonitor] Shutting down gracefully")
+			return
 
-		currentFloor := config.ElevatorInstance.Floor
-		currentState := config.ElevatorInstance.State
+		case <-ticker.C:
+			currentFloor := config.ElevatorInstance.Floor
+			currentState := config.ElevatorInstance.State
 
-		// Reset timer if the elevator starts moving
-		if currentState == config.Moving && lastState != config.Moving {
-			lastFloorTime = time.Now()
-			fmt.Println("[Movementmonitor]: Elevator started moving. Timer reset.")
-		}
+			// Reset timer if elevator started moving
+			if currentState == config.Moving && lastState != config.Moving {
+				lastFloorTime = time.Now()
+				fmt.Println("[MovementMonitor] Elevator started moving. Timer reset.")
+			}
 
-		// Update last floor and reset timer when reaching a new floor
-		if currentFloor != -1 && currentFloor != lastFloor {
-			lastFloor = currentFloor
-			lastFloorTime = time.Now()
-			fmt.Printf("[Movementmonitor]: Reached floor %d\n", currentFloor)
-		}
+			// If reached a new floor, reset timer
+			if currentFloor != -1 && currentFloor != lastFloor {
+				lastFloor = currentFloor
+				lastFloorTime = time.Now()
+				fmt.Printf("[MovementMonitor] Reached floor %d\n", currentFloor)
+			}
+			// Timeout check
+			if currentState == config.Moving && time.Since(lastFloorTime) > timeoutBetweenFloors {
+				fmt.Println("[MovementMonitor] Timeout: Elevator stuck between floors.")
+				fmt.Println("[MovementMonitor] Requesting restart...")
+				select {
+				case restartCh <- struct{}{}:
+				default:
+					fmt.Println("[MovementMonitor] Restart already requested.")
+				}
+				return
+			}
 
-		// Check for timeout between floors
-		if currentState == config.Moving &&
-			time.Since(lastFloorTime) > timeoutBetweenFloors {
-
-			fmt.Println("\n[Movementmonitor]: Timeout: Elevator appears stuck between floors.")
-			fmt.Println("\n[Movementmonitor]: Attempting self-restart...")
-			RestartSelf()
-		}
-
-		lastState = currentState
+			lastState = currentState
+		}	
 	}
 }
