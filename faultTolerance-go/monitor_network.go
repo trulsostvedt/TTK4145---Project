@@ -1,7 +1,6 @@
 package faulttolerance
 
 import (
-	"TTK4145---project/Network-go/network/peers"
 	"TTK4145---project/config"
 	"TTK4145---project/driver-go"
 	"fmt"
@@ -44,7 +43,7 @@ func MonitorNetwork() {
 		// If we have lost network connection, check if we have active cab orders
 		if !CheckNetworkStatus() {
 			if hasActiveCabOrders() {
-				peerUpdateCh := make(chan peers.PeerUpdate)
+				//peerUpdateCh := make(chan peers.PeerUpdate)
 				if !offlineMode {
 					fmt.Println("[MonitorNetwork] Network lost, but cab orders remain. Entering local-only mode.")
 					config.IsOfflineMode = true
