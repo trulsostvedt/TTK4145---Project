@@ -171,6 +171,15 @@ func HRA() {
 	}
 	fmt.Println()
 
+	// Print elevator directions centered in the box
+	fmt.Printf("%8s", "")
+	for _, id := range elevatorIDs {
+		direction := input.States[id].Direction
+		padding := (boxContentWidth - len(direction)) / 2
+		fmt.Printf("│%s%s%s│", strings.Repeat(" ", padding), direction, strings.Repeat(" ", boxContentWidth-len(direction)-padding))
+	}
+	fmt.Println()
+
 	// Print middle border for each elevator box
 	fmt.Printf("%8s", "")
 	for range elevatorIDs {

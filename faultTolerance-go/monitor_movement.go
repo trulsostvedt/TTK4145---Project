@@ -3,11 +3,8 @@ package faulttolerance
 import (
 	"TTK4145---project/config"
 	"fmt"
-	"sync"
 	"time"
 )
-
-var movementMonitorMutex sync.Mutex // Mutex to protect shared state
 
 // timeoutBetweenFloors is the time the elevator waits before attempting to restart itself
 const (
@@ -26,13 +23,9 @@ func MonitorMovement() {
 	for {
 		time.Sleep(tickRate)
 
-		// Use mutex to safely access shared state
-		movementMonitorMutex.Lock()
-
 		// Skip monitoring if a restart is already in progress
 		if isRestarting {
 			fmt.Println("[Movementmonitor]: Restart in progress. Skipping movement check...")
-			movementMonitorMutex.Unlock()
 			continue
 		}
 
@@ -58,12 +51,9 @@ func MonitorMovement() {
 
 			fmt.Println("\n[Movementmonitor]: Timeout: Elevator appears stuck between floors.")
 			fmt.Println("\n[Movementmonitor]: Attempting self-restart...")
-			movementMonitorMutex.Unlock() // Unlock before restarting
 			RestartSelf()
-			return // Exit the current goroutine after restart
 		}
 
 		lastState = currentState
-		movementMonitorMutex.Unlock()
 	}
 }

@@ -19,6 +19,10 @@ func removeOrder(floor, button int) {
 
 }
 func removeOrders(floor int) {
+	if floor == -1 {
+		return
+	}
+
 	queue := <-config.MyQueue
 	if queue[floor][int(config.ButtonUp)] {
 		removeOrder(floor, int(config.ButtonUp))
@@ -47,6 +51,9 @@ func decideDir() {
 		elevio.SetMotorDirection(elevio.MD_Stop)
 		return
 	}
+	if elevio.GetFloor() == -1 {
+		return
+	}
 
 	// this is new
 	var direction elevio.MotorDirection
@@ -63,21 +70,22 @@ func decideDir() {
 
 	if reachedFloor(elevio.BT_HallUp) && direction != elevio.MD_Down {
 		elevio.SetMotorDirection(elevio.MD_Stop)
-		go openDoor(config.ElevatorInstance.Floor, int(direction))
+		go openDoor(elevio.GetFloor(), int(direction))
 		return
 	} else if reachedFloor(elevio.BT_HallDown) && direction != elevio.MD_Up {
 		elevio.SetMotorDirection(elevio.MD_Stop)
-		go openDoor(config.ElevatorInstance.Floor, int(direction))
+		go openDoor(elevio.GetFloor(), int(direction))
 		return
 	} else if reachedFloor(elevio.BT_Cab) {
 		elevio.SetMotorDirection(elevio.MD_Stop)
-		go openDoor(config.ElevatorInstance.Floor, int(direction))
+		go openDoor(elevio.GetFloor(), int(direction))
 		return
 	}
 
 	if direction != elevio.MD_Stop {
 		config.ElevatorInstance.State = config.Moving
 		elevio.SetMotorDirection(direction)
+
 		return
 	}
 	elevio.SetMotorDirection(elevio.MD_Stop)
@@ -85,25 +93,10 @@ func decideDir() {
 
 }
 
-func mapButtonToDirection(button int) elevio.MotorDirection {
-	if button == int(config.ButtonUp) {
-		return elevio.MD_Up
-	} else if button == int(config.ButtonDown) {
-		return elevio.MD_Down
-	}
-	return elevio.MD_Stop
-}
-
-func mapDirectionToButton(direction elevio.MotorDirection) int {
-	if direction == elevio.MD_Up {
-		return int(config.ButtonUp)
-	} else if direction == elevio.MD_Down {
-		return int(config.ButtonDown)
-	}
-	return -1
-}
-
 func reachedFloor(button elevio.ButtonType) bool {
+	if config.ElevatorInstance.Floor == -1 {
+		return false
+	}
 	queue := <-config.MyQueue
 
 	return queue[config.ElevatorInstance.Floor][int(button)]
@@ -140,19 +133,6 @@ func isOrderBelow() bool {
 	return false
 }
 
-func hasQueueChanged(current, previous [config.NumFloors][config.NumButtons]config.OrderState) bool {
-	for i := 0; i < config.NumFloors; i++ {
-		for j := 0; j < config.NumButtons; j++ {
-			if current[i][j] != previous[i][j] {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-// TODO: Doesnt work when both up and down and then going up
-
 func openDoor(floor, button int) {
 
 	elevio.SetMotorDirection(elevio.MD_Stop)
@@ -171,7 +151,7 @@ func openDoor(floor, button int) {
 		go openDoor(floor, button)
 		return
 	}
-	removeOrders(floor)
+	removeOrders(elevio.GetFloor())
 	config.ElevatorInstance.State = config.Idle
 	decideDir()
 }
@@ -248,4 +228,16 @@ func offlineMode() {
 		}
 	}
 
+}
+
+func hasLeftFloor(leftFloorCh chan bool) {
+	for {
+		if elevio.GetFloor() == -1 {
+			leftFloorCh <- true
+		} else {
+			leftFloorCh <- false
+		}
+		time.Sleep(10 * time.Millisecond)
+
+	}
 }
