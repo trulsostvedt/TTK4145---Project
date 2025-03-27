@@ -143,14 +143,14 @@ func isOrderBelow() bool {
 }
 
 func hasQueueChanged(current, previous [config.NumFloors][config.NumButtons]config.OrderState) bool {
-    for i := 0; i < config.NumFloors; i++ {
-        for j := 0; j < config.NumButtons; j++ {
-            if current[i][j] != previous[i][j] {
-                return true
-            }
-        }
-    }
-    return false
+	for i := 0; i < config.NumFloors; i++ {
+		for j := 0; j < config.NumButtons; j++ {
+			if current[i][j] != previous[i][j] {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // TODO: Doesnt work when both up and down and then going up

@@ -3,7 +3,7 @@ package faulttolerance
 import (
 	"TTK4145---project/config"
 	"fmt"
-	"time"
+	"time" 
 )
 
 // timeoutBetweenFloors is the time the elevator waits before attempting to restart itself

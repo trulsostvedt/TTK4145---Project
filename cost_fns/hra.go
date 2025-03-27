@@ -93,13 +93,23 @@ func HRA() {
 		HallRequests: hallRequests,
 		States:       make(map[string]HRAElevState),
 	}
-
-	for id, elev := range config.Elevators {
-		input.States[id] = HRAElevState{
-			Behavior:    mapElevStateToBehavior[elev.State],
-			Floor:       elev.Floor,
-			Direction:   mapDirectionToString(elev.Direction),
-			CabRequests: mapQueueToCabRequests(elev.Queue),
+	if !config.IsOfflineMode {
+		for id, elev := range config.Elevators {
+			if elev.Floor != -1 {
+				input.States[id] = HRAElevState{
+					Behavior:    mapElevStateToBehavior[elev.State],
+					Floor:       elev.Floor,
+					Direction:   mapDirectionToString(elev.Direction),
+					CabRequests: mapQueueToCabRequests(elev.Queue),
+				}
+			}
+		}
+	} else {
+		input.States[config.ElevatorInstance.ID] = HRAElevState{
+			Behavior:    mapElevStateToBehavior[config.ElevatorInstance.State],
+			Floor:       config.ElevatorInstance.Floor,
+			Direction:   mapDirectionToString(config.ElevatorInstance.Direction),
+			CabRequests: mapQueueToCabRequests(config.ElevatorInstance.Queue),
 		}
 	}
 

@@ -2,7 +2,6 @@ package driver
 
 import (
 	"TTK4145---project/config"
-	hra "TTK4145---project/cost_fns"
 	"TTK4145---project/driver-go/elevio"
 	"fmt"
 )
@@ -90,11 +89,13 @@ func RunElevator() {
 		case <-config.MyQueue:
 			decideDir()
 		}
-
-		// Check if the queue has changed
-		if hasQueueChanged(config.ElevatorInstance.Queue, previousQueue) {
-			previousQueue = config.ElevatorInstance.Queue // Update the previous state
-			hra.HRA()                                     // Run HRA only when the queue changes
-		}
+		//hra.HRA()
+		/*
+			// Check if the queue has changed
+			if hasQueueChanged(config.ElevatorInstance.Queue, previousQueue) {
+				previousQueue = config.ElevatorInstance.Queue // Update the previous state
+				hra.HRA()                                     // Run HRA only when the queue changes
+			}
+		*/
 	}
 }
