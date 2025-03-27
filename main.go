@@ -7,16 +7,9 @@ import (
 	elevio "TTK4145---project/driver-go/elevio"
 	faultTolerance "TTK4145---project/faultTolerance-go"
 	"flag"
-	"fmt"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 func main() {
-	// Set up signal handling for graceful termination
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
 	// Start all necessary goroutines
 	go network.Network(&config.ElevatorInstance)
@@ -25,10 +18,7 @@ func main() {
 	go faultTolerance.MonitorNetwork()
 
 	// Wait for termination signal
-	select {
-	case sig := <-sigChan:
-		fmt.Printf("\n[System] Caught signal: %s. Exiting cleanly.\n", sig)
-	}
+	select {}
 }
 
 func init() {

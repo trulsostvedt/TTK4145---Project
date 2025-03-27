@@ -103,7 +103,7 @@ func RestartSelf() {
 	fmt.Println("[RestartSelf] Restarting elevator process...")
 
 	// Start the new process
-	cmd := exec.Command("go", "run", "main.go", "-id="+config.ElevatorInstance.ID)
+	cmd := exec.Command("go", "run", "main.go", "-id="+config.ElevatorInstance.ID, "-port="+config.Port)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin

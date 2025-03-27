@@ -158,7 +158,7 @@ func openDoor(floor, button int) {
 	elevio.SetMotorDirection(elevio.MD_Stop)
 	fmt.Println("Door open in floor", floor)
 	config.ElevatorInstance.State = config.DoorOpen
-	removeOrders(floor)
+
 	saveCabOrders()
 	time1 := time.Now()
 	for {
@@ -171,6 +171,7 @@ func openDoor(floor, button int) {
 		go openDoor(floor, button)
 		return
 	}
+	removeOrders(floor)
 	config.ElevatorInstance.State = config.Idle
 	decideDir()
 }
