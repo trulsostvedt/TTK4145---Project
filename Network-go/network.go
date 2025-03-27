@@ -72,7 +72,7 @@ func Run(ctx context.Context) {
 			}
 
 		case a := <-elevatorRx:
-			fmt.Printf("Received: %#v\n", a)
+			//fmt.Printf("Received: %#v\n", a)
 
 			elev := config.Elevator{
 				ID:        a.ID,
