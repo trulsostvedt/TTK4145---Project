@@ -25,26 +25,38 @@ func RunElevatorWithContext(ctx context.Context) {
 	go elevio.PollFloorSensor(ctx, drv_floors)
 	go elevio.PollObstructionSwitch(ctx, drv_obstr)
 	go elevio.PollStopButton(ctx, drv_stop)
+	go setAllLightsLoop(ctx)
 
-	fmt.Println("starting floor: ", config.ElevatorInstance.Floor)
-	config.ElevatorInstance.Floor = elevio.GetFloor()
-	fmt.Println("starting floor: ", config.ElevatorInstance.Floor)
-	if config.ElevatorInstance.Floor == -1 {
-		elevio.SetMotorDirection(elevio.MD_Down)
-		for config.ElevatorInstance.Floor == -1 {
-			select {
-			case <-ctx.Done():
-				fmt.Println("[Driver] Shutdown during floor initialization")
-				return
-			case floor := <-drv_floors:
-				config.ElevatorInstance.Floor = floor
+	initDone := make(chan struct{})
+	go func() {
+		fmt.Println("starting floor: ", config.ElevatorInstance.Floor)
+		config.ElevatorInstance.Floor = elevio.GetFloor()
+		if config.ElevatorInstance.Floor == -1 {
+			elevio.SetMotorDirection(elevio.MD_Down)
+			for config.ElevatorInstance.Floor == -1 {
+				select {
+				case <-ctx.Done():
+					fmt.Println("[Driver] Shutdown during floor initialization")
+					return
+				case floor := <-drv_floors:
+					config.ElevatorInstance.Floor = floor
+				}
 			}
+			elevio.SetMotorDirection(elevio.MD_Stop)
 		}
-		elevio.SetMotorDirection(elevio.MD_Stop)
+		fmt.Println("Init complete. Current floor:", config.ElevatorInstance.Floor)
+		close(initDone)
+	}()
+
+	select {
+	case <-ctx.Done():
+		fmt.Println("[Driver] Shutdown before init completed.")
+		return
+	case <-initDone:
+		// Continue normally
 	}
 
 	decideDir()
-	go setAllLightsLoop(ctx)
 	for {
 		select {
 		case <-ctx.Done():
@@ -84,7 +96,6 @@ func RunElevatorWithContext(ctx context.Context) {
 			}
 		case <-config.MyQueue:
 			decideDir()
-
 		}
 	}
 }
