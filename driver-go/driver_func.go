@@ -241,3 +241,7 @@ func hasLeftFloor(leftFloorCh chan bool) {
 
 	}
 }
+
+func StopElevator() {
+	elevio.SetMotorDirection(elevio.MD_Stop)
+}

@@ -18,15 +18,23 @@ func main() {
 	// Start all necessary goroutines
 	go network.Network(&config.ElevatorInstance)
 	go driver.RunElevator()
+
+	// Set up signal handling
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		<-signalChan
+		fmt.Println("Termination signal received. Shutting down elevator.")
+		elevio.SetMotorDirection(elevio.MD_Stop) // Stop the motor
+		os.Exit(0)
+	}()
+
 	go faultTolerance.MonitorMovement()
 	go faultTolerance.MonitorNetwork()
 
-	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
-	// Wait for termination signal
-	<-signalChan
-	fmt.Println("Termination signal received. Shutting down elevator")
-	os.Exit(0)
+	select {}
+
 }
 
 func init() {

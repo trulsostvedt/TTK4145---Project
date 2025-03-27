@@ -1,11 +1,11 @@
 package faulttolerance
 
 import (
+	"TTK4145---project/Network-go/network/peers"
 	"TTK4145---project/config"
+	"TTK4145---project/driver-go"
 	"fmt"
 	"net"
-	"os"
-	"os/exec"
 	"time"
 )
 
@@ -44,6 +44,7 @@ func MonitorNetwork() {
 		// If we have lost network connection, check if we have active cab orders
 		if !CheckNetworkStatus() {
 			if hasActiveCabOrders() {
+				peerUpdateCh := make(chan peers.PeerUpdate)
 				if !offlineMode {
 					fmt.Println("[MonitorNetwork] Network lost, but cab orders remain. Entering local-only mode.")
 					config.IsOfflineMode = true
@@ -95,29 +96,8 @@ var restartCooldown = 10 * time.Second // Cooldown period after a restart
 // RestartSelf restarts the elevator process by running the main.go file with the current elevator ID
 // filepath: /home/student/Documents/gr27/TTK4145---Project/faultTolerance-go/monitor_network.go
 func RestartSelf() {
-	if isRestarting {
-		fmt.Println("[RestartSelf] Restart already in progress...")
-		return
-	}
-	isRestarting = true
-	fmt.Println("[RestartSelf] Restarting elevator process...")
+	panic("Restart program!")
 
-	// Start the new process
-	cmd := exec.Command("./elevator", "-id="+config.ElevatorInstance.ID, "-port="+config.Port)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
-
-	err := cmd.Start()
-	if err != nil {
-		fmt.Println("[RestartSelf] Failed to restart elevator:", err)
-		isRestarting = false
-		return
-	}
-
-	// Log success and terminate the current process
-	fmt.Println("[RestartSelf] Elevator restarted successfully. Exiting current process...")
-	os.Exit(0) // Terminate the current process
 }
 
 // hasActiveCabOrders() checks if the elevator has any active cab orders.
@@ -129,4 +109,9 @@ func hasActiveCabOrders() bool {
 		}
 	}
 	return false
+}
+
+func cleanup() {
+	// Perform cleanup if necessary
+	driver.StopElevator()
 }
