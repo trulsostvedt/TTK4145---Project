@@ -1,7 +1,6 @@
 package config
 
 import (
-	
 	"TTK4145---project/driver-go/elevio"
 )
 
@@ -49,8 +48,6 @@ type Elevator struct {
 	Floor     int
 	Queue     [NumFloors][NumButtons]OrderState
 }
-
-
 
 var ElevatorInstance Elevator
 

@@ -3,7 +3,7 @@ package faulttolerance
 import (
 	"TTK4145---project/config"
 	"fmt"
-	"time" 
+	"time"
 )
 
 // timeoutBetweenFloors is the time the elevator waits before attempting to restart itself
@@ -22,6 +22,12 @@ func MonitorMovement() {
 
 	for {
 		time.Sleep(tickRate)
+
+		// Skip monitoring if a restart is already in progress
+		if isRestarting {
+			fmt.Println("[Movementmonitor]: Restart in progress. Skipping movement check...")
+			continue
+		}
 
 		currentFloor := config.ElevatorInstance.Floor
 		currentState := config.ElevatorInstance.State

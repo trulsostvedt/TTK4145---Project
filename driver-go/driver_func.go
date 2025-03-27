@@ -2,13 +2,14 @@ package driver
 
 import (
 	"TTK4145---project/config"
+	hra "TTK4145---project/cost_fns"
 	"TTK4145---project/driver-go/elevio"
 	"fmt"
 	"os"
 	"time"
 )
 
-var previousQueue [config.NumFloors][config.NumButtons]config.OrderState
+//var previousQueue [config.NumFloors][config.NumButtons]config.OrderState
 
 // TODO: Decide direction only decides what direction it should go next, but do not set the motordirection.
 // Cab orders are now saved and loaded from a file.
@@ -105,11 +106,8 @@ func mapDirectionToButton(direction elevio.MotorDirection) int {
 func reachedFloor(button elevio.ButtonType) bool {
 	queue := <-config.MyQueue
 
-	if queue[config.ElevatorInstance.Floor][int(button)] {
-		return true
-	}
+	return queue[config.ElevatorInstance.Floor][int(button)]
 
-	return false
 }
 
 func isOrderAbove() bool {
@@ -239,4 +237,14 @@ func setAllLights() {
 	} else {
 		elevio.SetDoorOpenLamp(false)
 	}
+}
+
+func offlineMode() {
+	for {
+		if config.IsOfflineMode {
+			hra.HRA()
+			time.Sleep(10 * time.Millisecond)
+		}
+	}
+
 }

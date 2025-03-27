@@ -25,6 +25,12 @@ func MonitorNetwork() {
 	for {
 		time.Sleep(2 * time.Second)
 
+		// Skip if a restart is already in progress
+		if isRestarting {
+			fmt.Println("[MonitorNetwork] Restart in progress. Skipping network check...")
+			continue
+		}
+
 		// If we have received a message from another elevator in the last 10 seconds, continue
 		if time.Since(LastPeerMessage) < 10*time.Second {
 			if offlineMode {
@@ -79,21 +85,24 @@ func CheckNetworkStatus() bool {
 	return true
 }
 
-var isRestarting = false
-
 // RestartSelf restarts the elevator process by running the main.go file with the current elevator ID
 // This is the same function for restarting the elevator process as in monitor_movement.go
 // If the elevator is already restarting, it will not attempt to restart again.
 // isRestarting is nesessary to avoid restarting the elevator both for network and movement issues
+var isRestarting = false
+var restartCooldown = 10 * time.Second // Cooldown period after a restart
+
+// RestartSelf restarts the elevator process by running the main.go file with the current elevator ID
+// filepath: /home/student/Documents/gr27/TTK4145---Project/faultTolerance-go/monitor_network.go
 func RestartSelf() {
 	if isRestarting {
-		fmt.Println("Restart already in progress...")
+		fmt.Println("[RestartSelf] Restart already in progress...")
 		return
 	}
 	isRestarting = true
+	fmt.Println("[RestartSelf] Restarting elevator process...")
 
-	fmt.Println("Restarting elevator process...")
-
+	// Start the new process
 	cmd := exec.Command("go", "run", "main.go", "-id="+config.ElevatorInstance.ID)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -101,13 +110,14 @@ func RestartSelf() {
 
 	err := cmd.Start()
 	if err != nil {
-		fmt.Println("Failed to restart elevator:", err)
+		fmt.Println("[RestartSelf] Failed to restart elevator:", err)
 		isRestarting = false
 		return
 	}
 
-	fmt.Println("Elevator restarted successfully.")
-	os.Exit(0) // Exit the current process
+	// Log success and terminate the current process
+	fmt.Println("[RestartSelf] Elevator restarted successfully. Exiting current process...")
+	os.Exit(0) // Terminate the current process
 }
 
 // hasActiveCabOrders() checks if the elevator has any active cab orders.

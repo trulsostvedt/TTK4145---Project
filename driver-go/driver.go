@@ -43,6 +43,7 @@ func RunElevator() {
 	// direction := decideDir()
 	// setDir(direction)
 	decideDir()
+	go offlineMode()
 
 	//go listenForQueueChanges()
 

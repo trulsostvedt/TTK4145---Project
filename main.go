@@ -14,13 +14,21 @@ import (
 )
 
 func main() {
+	// Set up signal handling for graceful termination
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
-	go handleExitSignal()
+	// Start all necessary goroutines
 	go network.Network(&config.ElevatorInstance)
 	go driver.RunElevator()
 	go faultTolerance.MonitorMovement()
 	go faultTolerance.MonitorNetwork()
-	select {}
+
+	// Wait for termination signal
+	select {
+	case sig := <-sigChan:
+		fmt.Printf("\n[System] Caught signal: %s. Exiting cleanly.\n", sig)
+	}
 }
 
 func init() {
@@ -46,16 +54,4 @@ func init() {
 
 	config.Elevators = make(map[string]config.Elevator)
 	config.Elevators[config.ElevatorInstance.ID] = config.ElevatorInstance
-}
-
-func handleExitSignal() {
-	sigChan := make(chan os.Signal, 1)
-
-	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-
-	go func() {
-		sig := <-sigChan
-		fmt.Printf("\n[System] Caught signal: %s. Exiting cleanly.\n", sig)
-		os.Exit(0)
-	}()
 }
