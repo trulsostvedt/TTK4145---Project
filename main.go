@@ -11,13 +11,11 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 )
 
 func main() {
-	go handleExitSignal()
-	time.Sleep(time.Second)
 
+	go handleExitSignal()
 	go network.Network(&config.ElevatorInstance)
 	go driver.RunElevator()
 	go faultTolerance.MonitorMovement()
