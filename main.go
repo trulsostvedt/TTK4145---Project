@@ -7,6 +7,10 @@ import (
 	elevio "TTK4145---project/driver-go/elevio"
 	faultTolerance "TTK4145---project/faultTolerance-go"
 	"flag"
+	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
@@ -17,8 +21,12 @@ func main() {
 	go faultTolerance.MonitorMovement()
 	go faultTolerance.MonitorNetwork()
 
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 	// Wait for termination signal
-	select {}
+	<-signalChan
+	fmt.Println("Termination signal received. Shutting down elevator")
+	os.Exit(0)
 }
 
 func init() {
