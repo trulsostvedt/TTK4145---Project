@@ -30,13 +30,13 @@ func Run(ctx context.Context) {
 
 	peerUpdateCh := make(chan peers.PeerUpdate)
 	peerTxEnable := make(chan bool)
-	go peers.Transmitter(15647, id, peerTxEnable)
-	go peers.Receiver(15647, peerUpdateCh)
+	go peers.Transmitter(ctx, 15647, id, peerTxEnable)
+	go peers.Receiver(ctx, 15647, peerUpdateCh)
 
 	elevatorTx := make(chan config.Elevator)
 	elevatorRx := make(chan config.Elevator)
-	go bcast.Transmitter(16569, elevatorTx)
-	go bcast.Receiver(16569, elevatorRx)
+	go bcast.Transmitter(ctx, 16569, elevatorTx)
+	go bcast.Receiver(ctx, 16569, elevatorRx)
 
 	// Goroutine to send elevator state at regular intervals
 	go func() {

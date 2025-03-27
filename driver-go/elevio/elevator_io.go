@@ -1,6 +1,7 @@
 package elevio
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"sync"
@@ -70,55 +71,79 @@ func SetStopLamp(value bool) {
 	write([4]byte{5, toByte(value), 0, 0})
 }
 
-func PollButtons(receiver chan<- ButtonEvent) {
+func PollButtons(ctx context.Context, receiver chan<- ButtonEvent) {
 	prev := make([][3]bool, _numFloors)
 	for {
-		time.Sleep(_pollRate)
-		for f := 0; f < _numFloors; f++ {
-			for b := ButtonType(0); b < 3; b++ {
-				v := GetButton(b, f)
-				if v != prev[f][b] && v != false {
-					receiver <- ButtonEvent{f, ButtonType(b)}
+		select {
+		case <-ctx.Done():
+			fmt.Println("[elevio] PollButtons stopping")
+			return
+		default:
+			time.Sleep(_pollRate)
+			for f := 0; f < _numFloors; f++ {
+				for b := ButtonType(0); b < 3; b++ {
+					v := GetButton(b, f)
+					if v != prev[f][b] && v {
+						receiver <- ButtonEvent{f, ButtonType(b)}
+					}
+					prev[f][b] = v
 				}
-				prev[f][b] = v
 			}
 		}
 	}
 }
 
-func PollFloorSensor(receiver chan<- int) {
+func PollFloorSensor(ctx context.Context, receiver chan<- int) {
 	prev := -1
 	for {
-		time.Sleep(_pollRate)
-		v := GetFloor()
-		if v != prev && v != -1 {
-			receiver <- v
+		select {
+		case <-ctx.Done():
+			fmt.Println("[elevio] PollFloorSensor stopping")
+			return
+		default:
+			time.Sleep(_pollRate)
+			v := GetFloor()
+			if v != prev && v != -1 {
+				receiver <- v
+			}
+			prev = v
 		}
-		prev = v
 	}
 }
 
-func PollStopButton(receiver chan<- bool) {
+func PollStopButton(ctx context.Context, receiver chan<- bool) {
 	prev := false
 	for {
-		time.Sleep(_pollRate)
-		v := GetStop()
-		if v != prev {
-			receiver <- v
+		select {
+		case <-ctx.Done():
+			fmt.Println("[elevio] PollStopButton stopping")
+			return
+		default:
+			time.Sleep(_pollRate)
+			v := GetStop()
+			if v != prev {
+				receiver <- v
+			}
+			prev = v
 		}
-		prev = v
 	}
 }
 
-func PollObstructionSwitch(receiver chan<- bool) {
+func PollObstructionSwitch(ctx context.Context, receiver chan<- bool) {
 	prev := false
 	for {
-		time.Sleep(_pollRate)
-		v := GetObstruction()
-		if v != prev {
-			receiver <- v
+		select {
+		case <-ctx.Done():
+			fmt.Println("[elevio] PollObstructionSwitch stopping")
+			return
+		default:
+			time.Sleep(_pollRate)
+			v := GetObstruction()
+			if v != prev {
+				receiver <- v
+			}
+			prev = v
 		}
-		prev = v
 	}
 }
 

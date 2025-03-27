@@ -21,10 +21,10 @@ func RunElevatorWithContext(ctx context.Context) {
 	drv_obstr := make(chan bool)
 	drv_stop := make(chan bool)
 
-	go elevio.PollButtons(drv_buttons)
-	go elevio.PollFloorSensor(drv_floors)
-	go elevio.PollObstructionSwitch(drv_obstr)
-	go elevio.PollStopButton(drv_stop)
+	go elevio.PollButtons(ctx, drv_buttons)
+	go elevio.PollFloorSensor(ctx, drv_floors)
+	go elevio.PollObstructionSwitch(ctx, drv_obstr)
+	go elevio.PollStopButton(ctx, drv_stop)
 
 	fmt.Println("starting floor: ", config.ElevatorInstance.Floor)
 	config.ElevatorInstance.Floor = elevio.GetFloor()

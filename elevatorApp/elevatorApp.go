@@ -33,16 +33,19 @@ func (a *App) Start() {
 	a.runWithRecovery("RunElevator", func() {
 		driver.RunElevatorWithContext(a.ctx)
 	})
-	a.runWithRecovery("MonitorNetwork", func() {
-		faultTolerance.MonitorNetwork(a.ctx, a.restartCh)
-	})
 	a.runWithRecovery("MonitorMovement", func() {
 		faultTolerance.MonitorMovement(a.ctx, a.restartCh)
+	})
+	a.runWithRecovery("MonitorNetwork", func() {
+		faultTolerance.MonitorNetwork(a.ctx, a.restartCh)
 	})
 	a.runWithRecovery("Network", func() {
 		network.Run(a.ctx)
 	})
-	// Block until context is canceled
+}
+
+// Wait blocks until all components have shut down
+func (a *App) Wait() {
 	<-a.ctx.Done()
 	fmt.Println("[App] Context canceled, waiting for components to stop...")
 	a.wg.Wait()
@@ -62,11 +65,13 @@ func (a *App) runWithRecovery(name string, fn func()) {
 		defer func() {
 			if r := recover(); r != nil {
 				fmt.Printf("[App] Recovered from panic in %s: %v\n", name, r)
-				a.restartCh <- struct{}{}
+				select {
+				case a.restartCh <- struct{}{}:
+				default:
+				}
 			}
 			a.wg.Done()
 		}()
-		// Run the component
 		fn()
 	}()
 }

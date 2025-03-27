@@ -40,7 +40,7 @@ func main() {
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
 	// --- Create restart channel ---
-	restartCh := make(chan struct{})
+	restartCh := make(chan struct{}, 1)
 
 	for {
 		ctx, cancel := context.WithCancel(context.Background())
@@ -51,14 +51,18 @@ func main() {
 			select {
 			case sig := <-sigChan:
 				fmt.Printf("\n[Main] Caught signal: %s. Exiting cleanly.\n", sig)
-				cancel()
+				app.Kill()
 				os.Exit(0)
 			case <-restartCh:
 				fmt.Println("[Main] Restart signal received. Restarting app...")
-				cancel()
+				app.Kill()
 			}
 		}()
 
 		app.Start()
+		app.Wait()
+		cancel() // Ensure context is cancelled
+		fmt.Println("[Main] App fully stopped. Restarting new instance...")
+
 	}
 }

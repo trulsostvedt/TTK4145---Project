@@ -2,17 +2,19 @@ package bcast
 
 import (
 	"TTK4145---project/Network-go/network/conn"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net"
 	"reflect"
+	"time"
 )
 
 const bufSize = 1024
 
 // Encodes received values from `chans` into type-tagged JSON, then broadcasts
 // it on `port`
-func Transmitter(port int, chans ...interface{}) {
+func Transmitter(ctx context.Context, port int, chans ...interface{}) {
 	checkArgs(chans...)
 	typeNames := make([]string, len(chans))
 	selectCases := make([]reflect.SelectCase, len(typeNames))
@@ -27,26 +29,31 @@ func Transmitter(port int, chans ...interface{}) {
 	conn := conn.DialBroadcastUDP(port)
 	addr, _ := net.ResolveUDPAddr("udp4", fmt.Sprintf("255.255.255.255:%d", port))
 	for {
-		chosen, value, _ := reflect.Select(selectCases)
-		jsonstr, _ := json.Marshal(value.Interface())
-		ttj, _ := json.Marshal(typeTaggedJSON{
-			TypeId: typeNames[chosen],
-			JSON:   jsonstr,
-		})
-		if len(ttj) > bufSize {
-			panic(fmt.Sprintf(
-				"Tried to send a message longer than the buffer size (length: %d, buffer size: %d)\n\t'%s'\n"+
-					"Either send smaller packets, or go to network/bcast/bcast.go and increase the buffer size",
-				len(ttj), bufSize, string(ttj)))
+		select {
+		case <-ctx.Done():
+			fmt.Println("[Bcast] Transmitter shutting down")
+			return
+		default:
+			chosen, value, ok := reflect.Select(selectCases)
+			if !ok {
+				continue
+			}
+			jsonstr, _ := json.Marshal(value.Interface())
+			ttj, _ := json.Marshal(typeTaggedJSON{
+				TypeId: typeNames[chosen],
+				JSON:   jsonstr,
+			})
+			if len(ttj) > bufSize {
+				panic(fmt.Sprintf("Message too long (%d bytes)", len(ttj)))
+			}
+			conn.WriteTo(ttj, addr)
 		}
-		conn.WriteTo(ttj, addr)
-
 	}
 }
 
 // Matches type-tagged JSON received on `port` to element types of `chans`, then
 // sends the decoded value on the corresponding channel
-func Receiver(port int, chans ...interface{}) {
+func Receiver(ctx context.Context, port int, chans ...interface{}) {
 	checkArgs(chans...)
 	chansMap := make(map[string]interface{})
 	for _, ch := range chans {
@@ -55,25 +62,33 @@ func Receiver(port int, chans ...interface{}) {
 
 	var buf [bufSize]byte
 	conn := conn.DialBroadcastUDP(port)
-	for {
-		n, _, e := conn.ReadFrom(buf[0:])
-		if e != nil {
-			fmt.Printf("bcast.Receiver(%d, ...):ReadFrom() failed: \"%+v\"\n", port, e)
-		}
 
-		var ttj typeTaggedJSON
-		json.Unmarshal(buf[0:n], &ttj)
-		ch, ok := chansMap[ttj.TypeId]
-		if !ok {
-			continue
+	for {
+		select {
+		case <-ctx.Done():
+			fmt.Println("[Bcast] Receiver shutting down")
+			return
+		default:
+			conn.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
+			n, _, err := conn.ReadFrom(buf[0:])
+			if err != nil {
+				continue
+			}
+
+			var ttj typeTaggedJSON
+			json.Unmarshal(buf[0:n], &ttj)
+			ch, ok := chansMap[ttj.TypeId]
+			if !ok {
+				continue
+			}
+			v := reflect.New(reflect.TypeOf(ch).Elem())
+			json.Unmarshal(ttj.JSON, v.Interface())
+			reflect.Select([]reflect.SelectCase{{
+				Dir:  reflect.SelectSend,
+				Chan: reflect.ValueOf(ch),
+				Send: reflect.Indirect(v),
+			}})
 		}
-		v := reflect.New(reflect.TypeOf(ch).Elem())
-		json.Unmarshal(ttj.JSON, v.Interface())
-		reflect.Select([]reflect.SelectCase{{
-			Dir:  reflect.SelectSend,
-			Chan: reflect.ValueOf(ch),
-			Send: reflect.Indirect(v),
-		}})
 	}
 }
 

@@ -22,8 +22,8 @@ func MonitorMovement(ctx context.Context, restartCh chan struct{}) {
 	lastState := config.ElevatorInstance.State
 
 	ticker := time.NewTicker(tickRate)
-	defer ticker.Stop() 
-	
+	defer ticker.Stop()
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -59,6 +59,6 @@ func MonitorMovement(ctx context.Context, restartCh chan struct{}) {
 			}
 
 			lastState = currentState
-		}	
+		}
 	}
 }

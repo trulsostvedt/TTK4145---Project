@@ -41,7 +41,7 @@ func MonitorNetwork(ctx context.Context, restartCh chan struct{}) {
 				continue
 			}
 
-			// If network is lost, check whether we should enter offline mode where we 
+			// If network is lost, check whether we should enter offline mode where we
 			// still handle active orders, but do not accept new ones, or restart the elevator
 			if !CheckNetworkStatus() {
 				if hasActiveOrders() {
@@ -50,7 +50,7 @@ func MonitorNetwork(ctx context.Context, restartCh chan struct{}) {
 						config.IsOfflineMode = true
 						offlineMode = true
 					}
-					continue 
+					continue
 				} else {
 					fmt.Println("[MonitorNetwork] Network lost and no active orders. Requesting restart...")
 					select {
