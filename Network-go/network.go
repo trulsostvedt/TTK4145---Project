@@ -2,7 +2,6 @@ package network
 
 import (
 	"TTK4145---project/Network-go/network/bcast"
-	"TTK4145---project/Network-go/network/conn"
 	"TTK4145---project/Network-go/network/localip"
 	"TTK4145---project/Network-go/network/peers"
 	"TTK4145---project/config"
@@ -79,6 +78,7 @@ func Network(elevatorInstance *config.Elevator) {
 			}
 
 		case a := <-elevatorRx:
+			faulttolerance.LastPeerMessage = time.Now()
 			//fmt.Printf("Received: %#v\n", a)
 
 			elev := config.Elevator{
@@ -178,23 +178,4 @@ type PeerUpdate struct {
 	Peers []string
 	New   string
 	Lost  []string
-}
-
-// Receiver listens for incoming messages on the given port, and sends them to the
-// provided channel.
-func Receiver(port int, peerUpdateCh chan<- PeerUpdate) {
-	var buf [1024]byte
-	conn := conn.DialBroadcastUDP(port)
-	if conn == nil {
-		fmt.Println("Kunne ikke opprette UDP-forbindelse!")
-		return
-	}
-
-	for {
-		conn.SetReadDeadline(time.Now().Add(faulttolerance.Interval))
-		n, _, err := conn.ReadFrom(buf[0:])
-		if err == nil && n > 0 {
-			faulttolerance.LastPeerMessage = time.Now() // Reset timer
-		}
-	}
 }

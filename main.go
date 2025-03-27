@@ -7,31 +7,17 @@ import (
 	elevio "TTK4145---project/driver-go/elevio"
 	faultTolerance "TTK4145---project/faultTolerance-go"
 	"flag"
-	"fmt"
-	"os"
-	"os/signal"
-	"syscall"
+	"time"
 )
 
 func main() {
 
 	// Start all necessary goroutines
-	go network.Network(&config.ElevatorInstance)
-	go driver.RunElevator()
-
-	// Set up signal handling
-	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
-
-	go func() {
-		<-signalChan
-		fmt.Println("Termination signal received. Shutting down elevator.")
-		elevio.SetMotorDirection(elevio.MD_Stop) // Stop the motor
-		os.Exit(0)
-	}()
-
 	go faultTolerance.MonitorMovement()
 	go faultTolerance.MonitorNetwork()
+	time.Sleep(time.Second)
+	go network.Network(&config.ElevatorInstance)
+	go driver.RunElevator()
 
 	select {}
 

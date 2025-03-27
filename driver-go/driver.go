@@ -4,6 +4,7 @@ import (
 	"TTK4145---project/config"
 	"TTK4145---project/driver-go/elevio"
 	"fmt"
+	"time"
 )
 
 var obstruction = false
@@ -40,10 +41,11 @@ func RunElevator() {
 		elevio.SetMotorDirection(elevio.MD_Stop)
 	}
 
+	go offlineMode()
+	time.Sleep(time.Second)
 	// direction := decideDir()
 	// setDir(direction)
 	decideDir()
-	go offlineMode()
 
 	//go listenForQueueChanges()
 
