@@ -56,7 +56,7 @@ func RunElevatorWithContext(ctx context.Context) {
 		// Continue normally
 	}
 
-	decideDir()
+	decideDir(ctx)
 	for {
 		select {
 		case <-ctx.Done():
@@ -83,7 +83,7 @@ func RunElevatorWithContext(ctx context.Context) {
 		case floor := <-drv_floors:
 			config.ElevatorInstance.Floor = floor
 			fmt.Printf("%+v\n", floor)
-			decideDir()
+			decideDir(ctx)
 
 		case obstr := <-drv_obstr:
 			obstruction = obstr
@@ -95,7 +95,7 @@ func RunElevatorWithContext(ctx context.Context) {
 				}
 			}
 		case <-config.MyQueue:
-			decideDir()
+			decideDir(ctx)
 		}
 	}
 }

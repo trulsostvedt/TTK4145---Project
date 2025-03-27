@@ -28,7 +28,7 @@ func removeOrders(floor int) {
 	}
 }
 
-func decideDir() {
+func decideDir(ctx context.Context) {
 
 	if config.ElevatorInstance.Floor == 0 && config.ElevatorInstance.Direction == elevio.MD_Down {
 		config.ElevatorInstance.Direction = elevio.MD_Stop
@@ -85,15 +85,15 @@ func decideDir() {
 
 	if reachedFloor(elevio.BT_HallUp) && direction != elevio.MD_Down {
 		elevio.SetMotorDirection(elevio.MD_Stop)
-		go openDoor(config.ElevatorInstance.Floor, int(direction))
+		go openDoor(ctx, config.ElevatorInstance.Floor, int(direction))
 		return
 	} else if reachedFloor(elevio.BT_HallDown) && direction != elevio.MD_Up {
 		elevio.SetMotorDirection(elevio.MD_Stop)
-		go openDoor(config.ElevatorInstance.Floor, int(direction))
+		go openDoor(ctx, config.ElevatorInstance.Floor, int(direction))
 		return
 	} else if reachedFloor(elevio.BT_Cab) {
 		elevio.SetMotorDirection(elevio.MD_Stop)
-		go openDoor(config.ElevatorInstance.Floor, int(direction))
+		go openDoor(ctx, config.ElevatorInstance.Floor, int(direction))
 		return
 	}
 
@@ -166,26 +166,26 @@ func isOrderBelow() bool {
 
 // TODO: Doesnt work when both up and down and then going up
 
-func openDoor(floor, button int) {
+func openDoor(ctx context.Context, floor, button int) {
 
 	elevio.SetMotorDirection(elevio.MD_Stop)
 	fmt.Println("Door open in floor", floor)
 	config.ElevatorInstance.State = config.DoorOpen
 	removeOrders(floor)
 	saveCabOrders()
-	time1 := time.Now()
-	for {
-		if time.Since(time1) > 3*time.Second {
-			break
-		}
+	select {
+	case <-time.After(3 * time.Second):
+	case <-ctx.Done():
+		fmt.Println("[Driver] openDoor interrupted by shutdown")
+		return
 	}
 	fmt.Println("Door closing in floor", floor)
 	if obstruction {
-		go openDoor(floor, button)
+		go openDoor(ctx, floor, button)
 		return
 	}
 	config.ElevatorInstance.State = config.Idle
-	decideDir()
+	decideDir(ctx)
 }
 
 func saveCabOrders() {
@@ -229,7 +229,6 @@ func ReadCabOrders() {
 		config.ElevatorInstance.Queue[i][2] = config.OrderState(order)
 	}
 }
-
 
 func setAllLightsLoop(ctx context.Context) {
 	ticker := time.NewTicker(100 * time.Millisecond)
