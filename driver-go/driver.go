@@ -25,7 +25,6 @@ func RunElevatorWithContext(ctx context.Context) {
 	go elevio.PollFloorSensor(ctx, drv_floors)
 	go elevio.PollObstructionSwitch(ctx, drv_obstr)
 	go elevio.PollStopButton(ctx, drv_stop)
-	go setAllLightsLoop(ctx)
 
 	initDone := make(chan struct{})
 	go func() {
@@ -53,7 +52,7 @@ func RunElevatorWithContext(ctx context.Context) {
 		fmt.Println("[Driver] Shutdown before init completed.")
 		return
 	case <-initDone:
-		// Continue normally
+		go setAllLightsLoop(ctx)
 	}
 
 	decideDir(ctx)
