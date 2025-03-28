@@ -9,11 +9,12 @@ import (
 
 var obstruction = false
 
+
 func RunElevator() {
 
 	numFloors := config.NumFloors
 
-	elevio.Init("localhost:"+config.Port, numFloors) // default 15657
+	elevio.Init("localhost:"+config.Port, numFloors)
 
 	var d elevio.MotorDirection = elevio.MD_Stop
 
@@ -29,9 +30,8 @@ func RunElevator() {
 	go elevio.PollObstructionSwitch(drv_obstr)
 	go elevio.PollStopButton(drv_stop)
 
-	fmt.Println("starting floor: ", config.ElevatorInstance.Floor)
+	// If not at a floor, move down until a floor is reached
 	config.ElevatorInstance.Floor = elevio.GetFloor()
-	fmt.Println("starting floor: ", config.ElevatorInstance.Floor)
 	if config.ElevatorInstance.Floor == -1 {
 		elevio.SetMotorDirection(elevio.MD_Down)
 		for config.ElevatorInstance.Floor == -1 {
@@ -41,13 +41,12 @@ func RunElevator() {
 		elevio.SetMotorDirection(elevio.MD_Stop)
 	}
 
+	// does nothing when elevator is online
 	go offlineMode()
 	time.Sleep(time.Second)
-	// direction := decideDir()
-	// setDir(direction)
-	decideDir()
+	
 
-	//go listenForQueueChanges()
+	decideDir()
 
 	for {
 		setAllLights()
@@ -62,6 +61,7 @@ func RunElevator() {
 		}
 
 		select {
+
 		case order := <-drv_buttons:
 			fmt.Printf("%+v\n", order)
 			if order.Button == elevio.BT_Cab {
@@ -73,32 +73,21 @@ func RunElevator() {
 				}
 			}
 
+
 		case floor := <-drv_floors:
 			config.ElevatorInstance.Floor = floor
 			fmt.Printf("%+v\n", floor)
 			decideDir()
 
+
 		case obstr := <-drv_obstr:
 			obstruction = obstr
 
-		case a := <-drv_stop:
-			fmt.Printf("%+v\n", a)
-			for f := 0; f < numFloors; f++ {
-				for b := elevio.ButtonType(0); b < 3; b++ {
-					continue
-				}
-			}
+
 
 		case <-config.MyQueue:
 			decideDir()
 		}
-		//hra.HRA()
-		/*
-			// Check if the queue has changed
-			if hasQueueChanged(config.ElevatorInstance.Queue, previousQueue) {
-				previousQueue = config.ElevatorInstance.Queue // Update the previous state
-				hra.HRA()                                     // Run HRA only when the queue changes
-			}
-		*/
+		
 	}
 }
