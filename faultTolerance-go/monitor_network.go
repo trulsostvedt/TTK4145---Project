@@ -16,10 +16,11 @@ var (
 // MonitorNetwork is a function that monitors the network connection.
 // If the elevator has not received a message from another elevator in 10 seconds,
 // it will attempt to restart itself.
-// If the elevator is in offline mode and has completed all cab orders, it will restart itself.
+// If the elevator is in offline mode and has completed all orders, it will restart itself.
+// The elevator starts in offline mode and will exit offline mode if it receives a message from another elevator. 
 func MonitorNetwork() {
 	offlineMode := true // Start in offline mode
-	config.IsOfflineMode = true
+	config.IsOfflineMode = true // Start in offline mode
 
 	for {
 		time.Sleep(5 * time.Second)
@@ -34,7 +35,7 @@ func MonitorNetwork() {
 			continue
 		}
 
-		// If we have lost network connection, check if we have active cab orders
+		// If we have lost network connection, check if we have active orders
 		if !CheckNetworkStatus() {
 			if hasActiveOrders() {
 				if !offlineMode {
@@ -49,10 +50,10 @@ func MonitorNetwork() {
 			}
 		}
 
-		// If we are in offline mode and have completed all cab orders, restart to rejoin network
+		// If we are in offline mode and have completed all orders, restart to rejoin network
 		if offlineMode && !hasActiveOrders() {
 			fmt.Println("[MonitorNetwork] Orders completed in offline mode. Restarting to rejoin network.")
-			RestartSelf()
+			RestartSelf() 
 		}
 	}
 }
@@ -60,7 +61,6 @@ func MonitorNetwork() {
 // CheckNetworkStatus checks if the network is up by pinging Google's DNS server.
 // This function is nessesary so that an elevator can find out if he is the one without network
 // or if the network is down on all elevators
-
 func CheckNetworkStatus() bool {
 	if time.Since(LastPeerMessage) < 10*time.Second {
 		return true
@@ -78,15 +78,14 @@ func CheckNetworkStatus() bool {
 	return true
 }
 
-// RestartSelf restarts the elevator process by running the main.go file with the current elevator ID
-// filepath: /home/student/Documents/gr27/TTK4145---Project/faultTolerance-go/monitor_network.go
+// RestartSelf restarts the elevator process by running the start-bash file with the current elevator ID
 func RestartSelf() {
 	panic("Restart program!")
 
 }
 
-// hasActiveCabOrders() checks if the elevator has any active cab orders.
-// If the elevator has active cab orders, it should not restart.
+// hasActiveCabOrders() checks if the elevator has any active orders.
+// If the elevator has active orders, it should not restart.
 func hasActiveOrders() bool {
 	for floor := 0; floor < config.NumFloors; floor++ {
 		if config.ElevatorInstance.Queue[floor][config.ButtonCab] == config.Confirmed ||

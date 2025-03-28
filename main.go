@@ -10,9 +10,10 @@ import (
 	"time"
 )
 
+// main function starts the elevator program
+// It initializes the elevator instance and starts the necessary goroutines
 func main() {
 
-	// Start all necessary goroutines
 	go faultTolerance.MonitorMovement()
 	go faultTolerance.MonitorNetwork()
 	time.Sleep(time.Second)
@@ -23,6 +24,7 @@ func main() {
 
 }
 
+// init function initializes the elevator instance and sets up the command line flags
 func init() {
 	flag.StringVar(&config.ElevatorInstance.ID, "id", "", "id of this peer")
 	flag.StringVar(&config.Port, "port", "15657", "port to listen on")

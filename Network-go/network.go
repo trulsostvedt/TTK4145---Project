@@ -15,20 +15,15 @@ import (
 	"time"
 )
 
-// We define some custom struct to send over the network.
-// Note that all members we want to transmit must be public. Any private members
-//
-//	will be received as zero-values.
-
+// Network is the main function for the network module
+// It handles the communication between elevators using UDP broadcast
 func Network(elevatorInstance *config.Elevator) {
 	// Our id can be anything. Here we pass it on the command line, using
 	//  `go run main.go -id=our_id`
 
 	var id = elevatorInstance.ID
 
-	// ... or alternatively, we can use the local IP address.
-	// (But since we can run multiple programs on the same PC, we also append the
-	//  process ID)
+	// If we don't have an id, we generate one based on the local IP and PID
 	if id == "" {
 		localIP, err := localip.LocalIP()
 		if err != nil {
@@ -38,8 +33,7 @@ func Network(elevatorInstance *config.Elevator) {
 		id = fmt.Sprintf("peer-%s-%d", localIP, os.Getpid())
 	}
 
-	// We make a channel for receiving updates on the id's of the peers that are
-	//  alive on the network
+	// Channels for receiving and sending peer updates
 	peerUpdateCh := make(chan peers.PeerUpdate)
 	// We can disable/enable the transmitter after it has been started.
 	// This could be used to signal that we are somehow "unavailable".
@@ -47,16 +41,12 @@ func Network(elevatorInstance *config.Elevator) {
 	go peers.Transmitter(15647, id, peerTxEnable)
 	go peers.Receiver(15647, peerUpdateCh)
 
-	// We make channels for sending and receiving our custom data types
+	// Channels for receiving and sending elevator messages
 	elevatorTx := make(chan config.Elevator) // Transmitter
 	elevatorRx := make(chan config.Elevator) // Receiver
-	// ... and start the transmitter/receiver pair on some port
-	// These functions can take any number of channels! It is also possible to
-	//  start multiple transmitters/receivers on the same port.
-	go bcast.Transmitter(16569, elevatorTx)
-	go bcast.Receiver(16569, elevatorRx)
+	go bcast.Transmitter(16569, elevatorTx)  // Transmitter
+	go bcast.Receiver(16569, elevatorRx)     // Receiver
 
-	// The example message. We just send one of these every second.
 	go func() {
 		for {
 			elevatorTx <- *elevatorInstance
@@ -79,7 +69,6 @@ func Network(elevatorInstance *config.Elevator) {
 
 		case a := <-elevatorRx:
 			faulttolerance.LastPeerMessage = time.Now()
-			//fmt.Printf("Received: %#v\n", a)
 
 			elev := config.Elevator{
 				ID:        a.ID,
@@ -91,9 +80,9 @@ func Network(elevatorInstance *config.Elevator) {
 
 			config.Elevators[a.ID] = elev
 
-			SyncHallRequests()
+			SyncHallRequests() // Synchronize hall requests between elevators
 
-			hra.HRA()
+			hra.HRA() // Run the HRA algorithm to update the elevator's state
 
 		}
 	}
@@ -107,6 +96,8 @@ func SyncHallRequests() {
 		if config.ElevatorInstance.Queue[i][config.ButtonUp] == config.Uninitialized {
 			initialized := false
 			for _, elev := range config.Elevators {
+				// Check if any other elevator has a valid request
+				// If so, copy it to this elevator
 				if elev.Queue[i][config.ButtonUp] != config.Uninitialized {
 					config.ElevatorInstance.Queue[i][config.ButtonUp] = elev.Queue[i][config.ButtonUp]
 					initialized = true
@@ -114,13 +105,15 @@ func SyncHallRequests() {
 				}
 			}
 			if !initialized {
+				// If no other elevator has a valid request, set this elevator's request to NoOrder
 				config.ElevatorInstance.Queue[i][config.ButtonUp] = config.NoOrder
 			}
 		}
-
+		// If this elevator has uninitialized requests, attempt to copy from other elevators
 		if config.ElevatorInstance.Queue[i][config.ButtonDown] == config.Uninitialized {
 			initialized := false
 			for _, elev := range config.Elevators {
+				// Check if any other elevator has a valid request
 				if elev.Queue[i][config.ButtonDown] != config.Uninitialized {
 					config.ElevatorInstance.Queue[i][config.ButtonDown] = elev.Queue[i][config.ButtonDown]
 					initialized = true
@@ -132,7 +125,7 @@ func SyncHallRequests() {
 			}
 		}
 	}
-
+	// Check if all elevators have confirmed the requests
 	for i := 0; i < config.NumFloors; i++ {
 		isConfirmedUp := true
 		for _, elev := range config.Elevators {
@@ -157,6 +150,7 @@ func SyncHallRequests() {
 		}
 	}
 
+	// Check if any elevator has a request that this elevator does not have
 	for i := 0; i < config.NumFloors; i++ {
 		for _, elev := range config.Elevators {
 			up := elev.Queue[i][config.ButtonUp] - config.ElevatorInstance.Queue[i][config.ButtonUp]
@@ -174,6 +168,7 @@ func SyncHallRequests() {
 
 }
 
+// PeerUpdate is a struct that contains information about the peers in the network
 type PeerUpdate struct {
 	Peers []string
 	New   string
