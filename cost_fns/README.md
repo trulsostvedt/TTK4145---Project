@@ -7,6 +7,7 @@ This module provides a mechanism for distributing elevator requests in a distrib
 The focus of TTK4145 is on distributed systems, fault tolerance, and related concepts, rather than on designing optimal elevator algorithms. To save time and effort, we use the provided `hall_request_assigner` binary for request distribution. This allows us to concentrate on the core learning objectives of the course while still ensuring a functional and efficient elevator system.
 
 ## Usage
+You can compile yourself or download the binary from https://github.com/TTK4145/Project-resources/releases/tag/v1.1.3
 
 The `hall_request_assigner` binary is used to assign hall requests to elevators. It takes the current state of the system as input and outputs the optimal assignment of requests. Below is an example of how to use the binary in our system:
 
