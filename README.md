@@ -1,6 +1,6 @@
 # TTK4145 Heisprosjekt
 
-Dette prosjektet implementerer et sanntidssystem for styring av flere (N) heiser over flere (M) etasjer. Systemet fokuserer på distribusjon, feiltoleranse og robust håndtering av nettverksproblemer – uten bruk av sentral server eller TCP-forbindelser.
+Dette prosjektet implementerer et sanntidssystem for styring av flere (N) heiser over flere (M) etasjer. Systemet fokuserer på distribusjon, feiltoleranse og robust håndtering av nettverksproblemer – uten bruk av en sentral server.
 
 ---
 
