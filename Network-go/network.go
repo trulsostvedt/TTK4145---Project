@@ -7,28 +7,18 @@ import (
 	"TTK4145---project/config"
 	hra "TTK4145---project/cost_fns"
 	faulttolerance "TTK4145---project/faultTolerance-go"
-
-	// "TTK4145---project/driver-go"
-
 	"fmt"
 	"os"
 	"time"
 )
 
-// We define some custom struct to send over the network.
-// Note that all members we want to transmit must be public. Any private members
-//
-//	will be received as zero-values.
+
 
 func Network(elevatorInstance *config.Elevator) {
-	// Our id can be anything. Here we pass it on the command line, using
-	//  `go run main.go -id=our_id`
 
 	var id = elevatorInstance.ID
 
-	// ... or alternatively, we can use the local IP address.
-	// (But since we can run multiple programs on the same PC, we also append the
-	//  process ID)
+	// If we have not been assigned an ID, we generate one based on our IP and PID
 	if id == "" {
 		localIP, err := localip.LocalIP()
 		if err != nil {
@@ -38,25 +28,20 @@ func Network(elevatorInstance *config.Elevator) {
 		id = fmt.Sprintf("peer-%s-%d", localIP, os.Getpid())
 	}
 
-	// We make a channel for receiving updates on the id's of the peers that are
-	//  alive on the network
+
 	peerUpdateCh := make(chan peers.PeerUpdate)
-	// We can disable/enable the transmitter after it has been started.
-	// This could be used to signal that we are somehow "unavailable".
+
 	peerTxEnable := make(chan bool)
 	go peers.Transmitter(15647, id, peerTxEnable)
 	go peers.Receiver(15647, peerUpdateCh)
 
-	// We make channels for sending and receiving our custom data types
 	elevatorTx := make(chan config.Elevator) // Transmitter
 	elevatorRx := make(chan config.Elevator) // Receiver
-	// ... and start the transmitter/receiver pair on some port
-	// These functions can take any number of channels! It is also possible to
-	//  start multiple transmitters/receivers on the same port.
+
 	go bcast.Transmitter(16569, elevatorTx)
 	go bcast.Receiver(16569, elevatorRx)
 
-	// The example message. We just send one of these every second.
+
 	go func() {
 		for {
 			elevatorTx <- *elevatorInstance
@@ -133,6 +118,7 @@ func SyncHallRequests() {
 		}
 	}
 
+	// if all elevators have uncontested requests, confirm them
 	for i := 0; i < config.NumFloors; i++ {
 		isConfirmedUp := true
 		for _, elev := range config.Elevators {
@@ -157,6 +143,7 @@ func SyncHallRequests() {
 		}
 	}
 
+	// If one elevator is one step ahead in syclic counter they are correct	
 	for i := 0; i < config.NumFloors; i++ {
 		for _, elev := range config.Elevators {
 			up := elev.Queue[i][config.ButtonUp] - config.ElevatorInstance.Queue[i][config.ButtonUp]

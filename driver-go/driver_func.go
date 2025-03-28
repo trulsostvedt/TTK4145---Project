@@ -9,11 +9,6 @@ import (
 	"time"
 )
 
-//var previousQueue [config.NumFloors][config.NumButtons]config.OrderState
-
-// TODO: Decide direction only decides what direction it should go next, but do not set the motordirection.
-// Cab orders are now saved and loaded from a file.
-// Still need to change logic in deciding direction and moving the elevator.
 func removeOrder(floor, button int) {
 	config.ElevatorInstance.Queue[floor][button] = config.NoOrder
 
@@ -55,7 +50,6 @@ func decideDir() {
 		return
 	}
 
-	// this is new
 	var direction elevio.MotorDirection
 	if isOrderAbove() {
 		direction = elevio.MD_Up
@@ -135,7 +129,6 @@ func openDoor(floor, button int) {
 	fmt.Println("Door open in floor", floor)
 	config.ElevatorInstance.State = config.DoorOpen
 
-	saveCabOrders()
 	time1 := time.Now()
 	for {
 		if time.Since(time1) > 3*time.Second {
@@ -148,12 +141,12 @@ func openDoor(floor, button int) {
 		return
 	}
 	removeOrders(elevio.GetFloor())
+	saveCabOrders()
 	config.ElevatorInstance.State = config.Idle
 	decideDir()
 }
 
 func saveCabOrders() {
-	// save cab orders to a file, if it exists overwrite, if not create a new file
 	filename := "cabOrders" + config.ElevatorInstance.ID + ".txt"
 	file, err := os.Create(filename)
 	if err != nil {
@@ -161,26 +154,23 @@ func saveCabOrders() {
 		return
 	}
 	defer file.Close()
-	// write the cab orders to the file, so no order, unconfiremd, confirmed, or uninitialized
+
 	for i := 0; i < config.NumFloors; i++ {
 		file.WriteString(fmt.Sprintf("%d ", config.ElevatorInstance.Queue[i][2]))
 	}
 }
 
 func ReadCabOrders() {
-	// read cab orders from a file
 	filename := "cabOrders" + config.ElevatorInstance.ID + ".txt"
 	file, err := os.Open(filename)
 	if err != nil {
 		if os.IsNotExist(err) {
-			// File does not exist, no problem, just return
 			return
 		}
 		fmt.Println(err)
 		return
 	}
 	defer file.Close()
-	// read the cab orders from the file
 	var order int
 	for i := 0; i < config.NumFloors; i++ {
 		_, err := fmt.Fscanf(file, "%d", &order)
@@ -196,9 +186,7 @@ func ReadCabOrders() {
 
 func setAllLights() {
 	for i := 0; i < config.NumFloors; i++ {
-		// fmt.Println("setting lights for floor", i)
 		for j := 0; j < config.NumButtons; j++ {
-			// fmt.Println("setting lights for button", j)
 			if config.ElevatorInstance.Queue[i][j] == config.Confirmed {
 				elevio.SetButtonLamp(elevio.ButtonType(j), i, true)
 			} else {
@@ -206,9 +194,8 @@ func setAllLights() {
 			}
 		}
 	}
-	// set floor indicator
+
 	elevio.SetFloorIndicator(config.ElevatorInstance.Floor)
-	// set door open lamp
 	if config.ElevatorInstance.State == config.DoorOpen {
 		elevio.SetDoorOpenLamp(true)
 	} else {

@@ -12,14 +12,6 @@ import (
 	"strings"
 )
 
-// Struct members must be public in order to be accessible by json.Marshal/.Unmarshal
-// This means they must start with a capital letter, so we need to use field renaming struct tags to make them camelCase
-
-//behavior is either "idle", "moving" or "doorOpen"
-//direction is either "up", "down" or "stop"
-//cabRequests is an array of length 4, where each element is true if the corresponding button is pressed
-
-// create a map from elevator state to behavior string
 
 type HRAElevState struct {
 	Behavior    string `json:"behaviour"`
@@ -133,28 +125,24 @@ func HRA() {
 		return
 	}
 
-	// Pretty print the output in the desired format
-	fmt.Print("\033[H\033[2J") // Clear the terminal
+	// Print the elevator orders
+	fmt.Print("\033[H\033[2J") 
 
-	// Sort elevator IDs to ensure the lowest ID is first
 	elevatorIDs := make([]string, 0, len(*output))
 	for id := range *output {
 		elevatorIDs = append(elevatorIDs, id)
 	}
 	sort.Strings(elevatorIDs)
 
-	// Define box dimensions
 	boxWidth := 25
 	boxContentWidth := boxWidth - 2
 
-	// Print top border for each elevator box
 	fmt.Printf("%8s", "")
 	for range elevatorIDs {
 		fmt.Printf("┌%s┐", strings.Repeat("─", boxContentWidth))
 	}
 	fmt.Println()
 
-	// Print elevator IDs centered in the box
 	fmt.Printf("%8s", "")
 	for _, id := range elevatorIDs {
 		padding := (boxContentWidth - len(id)) / 2
@@ -162,7 +150,6 @@ func HRA() {
 	}
 	fmt.Println()
 
-	// Print elevator states centered in the box
 	fmt.Printf("%8s", "")
 	for _, id := range elevatorIDs {
 		state := input.States[id].Behavior
@@ -171,7 +158,6 @@ func HRA() {
 	}
 	fmt.Println()
 
-	// Print elevator directions centered in the box
 	fmt.Printf("%8s", "")
 	for _, id := range elevatorIDs {
 		direction := input.States[id].Direction
@@ -180,21 +166,18 @@ func HRA() {
 	}
 	fmt.Println()
 
-	// Print middle border for each elevator box
 	fmt.Printf("%8s", "")
 	for range elevatorIDs {
 		fmt.Printf("├%s┤", strings.Repeat("─", boxContentWidth))
 	}
 	fmt.Println()
 
-	// Print "up", "down", "cab" labels centered in the box
 	fmt.Printf("%8s", "")
 	for range elevatorIDs {
 		fmt.Printf("│%7s %7s %7s│", "up", "down", "cab")
 	}
 	fmt.Println()
 
-	// Print the states for each floor
 	for floor := config.NumFloors - 1; floor >= 0; floor-- {
 		fmt.Printf("hall%-2d  ", floor)
 		for _, id := range elevatorIDs {
@@ -204,13 +187,13 @@ func HRA() {
 		fmt.Println()
 	}
 
-	// Print bottom border for each elevator box
 	fmt.Printf("%8s", "")
 	for range elevatorIDs {
 		fmt.Printf("└%s┘", strings.Repeat("─", boxContentWidth))
 	}
 	fmt.Println()
 
+	// Send the orders to the elevators
 	config.MyQueue <- (*output)[config.ElevatorInstance.ID]
 
 }

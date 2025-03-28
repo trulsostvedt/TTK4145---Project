@@ -6,14 +6,13 @@ import (
 	"time"
 )
 
-// timeoutBetweenFloors is the time the elevator waits before attempting to restart itself
+
 const (
 	timeoutBetweenFloors = 5 * time.Second
 	tickRate             = 100 * time.Millisecond
 )
 
-// MonitorMovement is a function that monitors the movement of the elevator.
-// If the elevator is stuck between floors, it will attempt to restart itself.
+
 func MonitorMovement() {
 	fmt.Println("[Movementmonitor]: Starting elevator movement monitor")
 	lastFloor := config.ElevatorInstance.Floor

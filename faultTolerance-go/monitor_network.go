@@ -13,10 +13,7 @@ var (
 	LastPeerMessage  = time.Now().Add(-10 * time.Second)
 )
 
-// MonitorNetwork is a function that monitors the network connection.
-// If the elevator has not received a message from another elevator in 10 seconds,
-// it will attempt to restart itself.
-// If the elevator is in offline mode and has completed all cab orders, it will restart itself.
+
 func MonitorNetwork() {
 	offlineMode := true // Start in offline mode
 	config.IsOfflineMode = true
@@ -58,9 +55,6 @@ func MonitorNetwork() {
 }
 
 // CheckNetworkStatus checks if the network is up by pinging Google's DNS server.
-// This function is nessesary so that an elevator can find out if he is the one without network
-// or if the network is down on all elevators
-
 func CheckNetworkStatus() bool {
 	if time.Since(LastPeerMessage) < 10*time.Second {
 		return true
@@ -78,15 +72,12 @@ func CheckNetworkStatus() bool {
 	return true
 }
 
-// RestartSelf restarts the elevator process by running the main.go file with the current elevator ID
-// filepath: /home/student/Documents/gr27/TTK4145---Project/faultTolerance-go/monitor_network.go
+
 func RestartSelf() {
 	panic("Restart program!")
 
 }
 
-// hasActiveCabOrders() checks if the elevator has any active cab orders.
-// If the elevator has active cab orders, it should not restart.
 func hasActiveOrders() bool {
 	for floor := 0; floor < config.NumFloors; floor++ {
 		if config.ElevatorInstance.Queue[floor][config.ButtonCab] == config.Confirmed ||
